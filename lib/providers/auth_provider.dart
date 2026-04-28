@@ -18,6 +18,8 @@ class AuthProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _isLoggedIn;
   String get role => _role;
+  String? get email => _auth.currentUser?.email;
+  String? get displayName => _auth.currentUser?.displayName;
 
   // Cek apakah user sudah login sebelumnya saat aplikasi dibuka
   Future<void> checkSession() async {
@@ -144,8 +146,13 @@ class AuthProvider extends ChangeNotifier {
 
   // Fungsi Logout
   Future<void> logout() async {
-    await _googleSignIn.signOut();
-    await _auth.signOut();
+    try {
+      await _googleSignIn.signOut();
+      await _auth.signOut();
+    } catch (e) {
+      debugPrint('Logout firebase error: $e');
+    }
+    
     final prefs = await SharedPreferences.getInstance();
     await prefs.clear();
     
