@@ -3,6 +3,7 @@ class TiketModel {
   final String localId;
   final String userId;
   final String kategori; // 'Sarpras' atau 'Kebersihan'
+  final String judul;
   final String lokasiDetail;
   final String deskripsi;
   final List<String> fotoPaths;
@@ -16,6 +17,7 @@ class TiketModel {
     required this.localId,
     required this.userId,
     required this.kategori,
+    required this.judul,
     required this.lokasiDetail,
     required this.deskripsi,
     required this.fotoPaths,
@@ -31,6 +33,7 @@ class TiketModel {
       localId: json['local_id'] as String,
       userId: json['user_id'] as String,
       kategori: json['kategori'] as String,
+      judul: json['judul'] as String? ?? 'Tanpa Judul',
       lokasiDetail: json['lokasi_detail'] as String,
       deskripsi: json['deskripsi'] as String,
       fotoPaths: List<String>.from(json['foto_paths'] ?? []),
@@ -49,6 +52,7 @@ class TiketModel {
       'local_id': localId,
       'user_id': userId,
       'kategori': kategori,
+      'judul': judul,
       'lokasi_detail': lokasiDetail,
       'deskripsi': deskripsi,
       'foto_paths': fotoPaths,
