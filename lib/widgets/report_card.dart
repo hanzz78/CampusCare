@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/tiket_model.dart';
 import '../providers/feed_provider.dart';
 import 'package:provider/provider.dart';
+import '../screens/report_detail_screen.dart';
 
 class ReportCard extends StatelessWidget {
   final TiketModel report;
@@ -27,8 +28,20 @@ class ReportCard extends StatelessWidget {
           ),
         ],
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ReportDetailScreen(report: report),
+              ),
+            );
+          },
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Image and Badge
           Stack(
@@ -161,6 +174,8 @@ class ReportCard extends StatelessWidget {
           ),
         ],
       ),
-    );
-  }
+    ),
+  ),
+);
+}
 }
