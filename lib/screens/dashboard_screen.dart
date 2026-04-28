@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../providers/feed_provider.dart';
 import '../widgets/report_card.dart';
+import 'camera_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String role;
@@ -186,7 +187,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 onTap: () {},
               ),
               GestureDetector(
-                onTap: () {},
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const CameraScreen(),
+                    ),
+                  );
+                },
                 child: Container(
                   height: 70,
                   width: 70,
