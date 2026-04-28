@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import '../providers/auth_provider.dart';
+import 'login_screen.dart';
 
 
 class DashboardScreen extends StatelessWidget {
@@ -41,7 +42,13 @@ class DashboardScreen extends StatelessWidget {
 
               if (confirm == true) {
                 await authProvider.logout();
-                // Catatan: main.dart otomatis melempar ke LoginScreen saat status auth berubah
+                if (context.mounted) {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (context) => const LoginScreen()),
+                    (route) => false,
+                  );
+                }
               }
             },
           ),

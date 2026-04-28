@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart'; 
 import 'complete_profile_screen.dart';
+import 'dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -37,34 +38,38 @@ class _LoginScreenState extends State<LoginScreen> {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton.icon(
-                  onPressed: authProvider.isLoading 
-                    ? null 
-                    : () async {
-                        try {
-                          // 1. Tunggu proses otentikasi Google selesai
-                          await authProvider.signInWithGoogle();
-                          
-                          // 2. Jika sukses (tidak masuk ke catch), pindah ke halaman profil
-                          if (context.mounted) {
-                            Navigator.pushReplacement(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const CompleteProfileScreen(),
-                              ),
-                            );
-                          }
-                        } catch (e) {
-                          // Menampilkan pesan error jika bukan email @polban.ac.id atau gagal
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(e.toString()), 
-                                backgroundColor: Colors.red,
-                              ),
-                            );
-                          }
+                  onPressed: () async {
+                    try {
+                      final ap = context.read<AuthProvider>();
+                      await ap.loginWithGoogle();
+                  
+                      if (context.mounted) {
+                        if (ap.isLoggedIn) {
+                          // Jika Admin atau Pelapor lama -> Langsung ke Dashboard
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => DashboardScreen(role: ap.role)),
+                          );
+                        } else {
+                          // Jika Pelapor baru (NIM/NIP belum ada) -> Ke Complete Profile
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => const CompleteProfileScreen()),
+                          );
                         }
-                      },
+                      }
+                    } catch (e) {
+                      // Menampilkan pesan error jika bukan email @polban.ac.id atau gagal
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(e.toString()), 
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
+                    }
+                  },
                   icon: authProvider.isLoading 
                     ? const SizedBox.shrink() 
                     : const Icon(Icons.login),

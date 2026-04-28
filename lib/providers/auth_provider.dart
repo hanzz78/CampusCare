@@ -34,24 +34,13 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Fungsi Login SSO Google (Hanya otentikasi awal, belum set status login)
-  Future<void> signInWithGoogle() async {
+  Future<void> loginWithGoogle() async {
     _isLoading = true;
     notifyListeners();
 
     try {
       final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        _isLoading = false;
-        notifyListeners();
-        return; // User batalin milih email
-      }
-
-      // Validasi Domain Polban
-      if (!googleUser.email.endsWith('@polban.ac.id') && 
-          !googleUser.email.endsWith('@jtk.polban.ac.id')) {
-        await _googleSignIn.signOut();
-        throw Exception('Gunakan email resmi institusi Polban!');
-      }
+      if (googleUser == null) return;
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
       final AuthCredential credential = GoogleAuthProvider.credential(
@@ -59,14 +48,55 @@ class AuthProvider extends ChangeNotifier {
         idToken: googleAuth.idToken,
       );
 
-      // Masuk ke Firebase Auth
-      await _auth.signInWithCredential(credential);
-      
-      // CATATAN: Kita TIDAK set _isLoggedIn = true di sini.
-      // Kita biarkan user dialihkan ke CompleteProfileScreen dulu oleh login_screen.dart
+      final UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final user = userCredential.user;
 
+      if (user != null) {
+        // --- PROSES VALIDASI EMAIL ---
+        if (user.email == null || !user.email!.endsWith('@polban.ac.id')) {
+          await _googleSignIn.signOut();
+          await _auth.signOut();
+          throw 'Harus menggunakan email @polban.ac.id';
+        }
+
+        // --- PROSES VALIDASI ROLE (EKSKLUSIF) ---
+        
+        // 1. Cek apakah email ada di koleksi admin_whitelist?
+        final adminDoc = await _db.collection('admin_whitelist').doc(user.email).get();
+
+        if (adminDoc.exists) {
+          // 🎉 DIA ADALAH PENANGGUNG JAWAB (ADMIN)
+          _role = 'Admin';
+          _isLoggedIn = true;
+          
+          // Simpan status admin di SharedPreferences agar tidak hilang saat restart
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('userRole', 'Admin');
+          await prefs.setBool('isLoggedIn', true);
+          
+          print("Login sebagai Admin terdeteksi!");
+        } else {
+          // 👤 DIA ADALAH PELAPOR (MAHASISWA/DOSEN)
+          // Cek apakah dia sudah pernah mengisi profil (NIM/NIP)?
+          final userDoc = await _db.collection('users').doc(user.uid).get();
+
+          if (userDoc.exists) {
+            _role = userDoc.data()?['role'] ?? 'Mahasiswa';
+            _isLoggedIn = true;
+            
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.setString('userRole', _role!);
+            await prefs.setBool('isLoggedIn', true);
+          } else {
+            // User baru, role belum ditentukan (nanti di CompleteProfileScreen)
+            _isLoggedIn = false; 
+            _role = 'user';
+          }
+        }
+      }
     } catch (e) {
-      rethrow; // Lempar error ke UI
+      print("Error Login: $e");
+      rethrow;
     } finally {
       _isLoading = false;
       notifyListeners();
