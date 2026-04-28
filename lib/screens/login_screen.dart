@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart'; 
 import 'complete_profile_screen.dart';
 import 'dashboard_screen.dart';
+import 'admin/admin_dashboard_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -45,11 +46,17 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                       if (context.mounted) {
                         if (ap.isLoggedIn) {
-                          // Jika Admin atau Pelapor lama -> Langsung ke Dashboard
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => DashboardScreen(role: ap.role)),
-                          );
+                          if (ap.role == 'Admin') {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
+                            );
+                          } else {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(builder: (context) => DashboardScreen(role: ap.role)),
+                            );
+                          }
                         } else {
                           // Jika Pelapor baru (NIM/NIP belum ada) -> Ke Complete Profile
                           Navigator.pushReplacement(

@@ -74,25 +74,17 @@ class DashboardScreen extends StatelessWidget {
 
                   // 2. MENU BERDASARKAN ROLE
                   Text(
-                    role == 'Mahasiswa' ? 'Menu Mahasiswa' : 'Menu Petugas',
+                    'Menu Utama',
                     style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 12),
                   
-                  // Tampilkan menu yang berbeda sesuai peran
-                  if (role == 'Mahasiswa') ...[
-                    _buildMenuGrid([
-                      _MenuData(icon: Icons.add_comment, title: 'Buat Laporan', color: Colors.blue),
-                      _MenuData(icon: Icons.history, title: 'Riwayat Saya', color: Colors.orange),
-                      _MenuData(icon: Icons.notifications, title: 'Pengumuman', color: Colors.purple),
-                    ]),
-                  ] else ...[
-                    _buildMenuGrid([
-                      _MenuData(icon: Icons.inbox, title: 'Laporan Masuk', color: Colors.red),
-                      _MenuData(icon: Icons.check_circle, title: 'Diselesaikan', color: Colors.green),
-                      _MenuData(icon: Icons.analytics, title: 'Statistik', color: Colors.teal),
-                    ]),
-                  ],
+                  // Menu Civitas (Mahasiswa/Dosen)
+                  _buildMenuGrid([
+                    _MenuData(icon: Icons.add_comment, title: 'Buat Laporan', color: Colors.blue),
+                    _MenuData(icon: Icons.history, title: 'Riwayat Saya', color: Colors.orange),
+                    _MenuData(icon: Icons.notifications, title: 'Pengumuman', color: Colors.purple),
+                  ]),
                 ],
               ),
             ),
