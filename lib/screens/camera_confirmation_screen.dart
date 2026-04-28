@@ -1,5 +1,8 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../providers/report_form_provider.dart';
+import 'report_form_wizard_screen.dart';
 
 class CameraConfirmationScreen extends StatelessWidget {
   final String imagePath;
@@ -76,9 +79,12 @@ class CameraConfirmationScreen extends StatelessWidget {
                   Expanded(
                     child: ElevatedButton(
                       onPressed: () {
-                        // TODO: Navigasi ke Form Pembuatan Tiket
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Foto Dikonfirmasi! (Form Pelaporan belum tersedia)')),
+                        context.read<ReportFormProvider>().setImagePath(imagePath);
+                        // Navigasi ke Wizard, hapus stack Camera & Confirmation agar tombol Back di Wizard kembali ke Dashboard
+                        Navigator.pushAndRemoveUntil(
+                          context,
+                          MaterialPageRoute(builder: (context) => const ReportFormWizardScreen()),
+                          (route) => route.isFirst,
                         );
                       },
                       style: ElevatedButton.styleFrom(

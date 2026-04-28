@@ -4,6 +4,7 @@ import '../providers/auth_provider.dart';
 import '../providers/feed_provider.dart';
 import '../widgets/report_card.dart';
 import 'camera_screen.dart';
+import 'report_form_wizard_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
   final String role;

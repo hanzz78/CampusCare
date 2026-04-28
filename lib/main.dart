@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart'; // Import Firebase
 import 'providers/auth_provider.dart';
 import 'providers/admin_dashboard_provider.dart';
 import 'providers/feed_provider.dart';
+import 'providers/report_form_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/admin/admin_dashboard_screen.dart';
@@ -21,6 +22,7 @@ await Firebase.initializeApp();
         ChangeNotifierProvider(create: (_) => AuthProvider()..checkSession()),
         ChangeNotifierProvider(create: (_) => AdminDashboardProvider()),
         ChangeNotifierProvider(create: (_) => FeedProvider()),
+        ChangeNotifierProvider(create: (_) => ReportFormProvider()),
       ],
       child: const MyApp(),
     ),
