@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../login_screen.dart';
+import '../report_history_screen.dart';
+import '../edit_profile_screen.dart';
+import '../notification_settings_screen.dart';
 
 class ProfileTab extends StatelessWidget {
   const ProfileTab({super.key});
@@ -36,19 +39,90 @@ class ProfileTab extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildSectionTitle('My Reports'),
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ReportHistoryScreen(),
+                            ),
+                          );
+                        },
+                        child: _buildSectionTitle('My Reports'),
+                      ),
                       _buildMyReportsCard(),
                       const SizedBox(height: 24),
                       _buildSectionTitle('Account'),
                       _buildMenuCard([
-                        _buildMenuRow(Icons.person, 'Edit Profile', onTap: () {}),
+                        _buildMenuRow(
+                          Icons.person,
+                          'Edit Profile',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const EditProfileScreen(),
+                              ),
+                            );
+                          },
+                        ),
                       ]),
                       const SizedBox(height: 24),
                       _buildSectionTitle('Preferences'),
                       _buildMenuCard([
-                        _buildMenuRow(Icons.notifications_none, 'Pengaturan Notifikasi', onTap: () {}),
+                        _buildMenuRow(
+                          Icons.notifications_none,
+                          'Pengaturan Notifikasi',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const NotificationSettingsScreen(),
+                              ),
+                            );
+                          },
+                        ),
                         const Divider(height: 1, indent: 48),
-                        _buildMenuRow(Icons.info_outline, 'Tentang Aplikasi', onTap: () {}),
+                        _buildMenuRow(
+                          Icons.info_outline,
+                          'Tentang Aplikasi',
+                          onTap: () {
+                            showDialog(
+                              context: context,
+                              builder: (dialogContext) => AlertDialog(
+                                title: const Text(
+                                  'Tentang CampusCare',
+                                  style: TextStyle(fontWeight: FontWeight.bold),
+                                ),
+                                content: const Text(
+                                  'CampusCare v1.0.0\n\nAplikasi untuk melaporkan dan memantau sarana prasarana kampus.\n\n© 2026 CampusCare. Hak cipta dilindungi.',
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                actions: [
+                                  ElevatedButton(
+                                    onPressed: () => Navigator.pop(dialogContext),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF3B696D),
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                    child: const Text(
+                                      'Tutup',
+                                      style: TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
                       ]),
                       const SizedBox(height: 48),
                       // Tombol Sign Out
