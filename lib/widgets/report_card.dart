@@ -138,35 +138,63 @@ class ReportCard extends StatelessWidget {
                 const Divider(height: 1, color: Color(0xFFEEEEEE)),
                 const SizedBox(height: 12),
                 
-                // Bottom Row (Upvote & Arrow)
+                // Bottom Action Info (Upvote & Total Comments)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    // Upvote Button
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.red.shade300),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.arrow_upward, size: 14, color: Colors.red.shade400),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${report.jumlahUpvote} Dukungan',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.red.shade400,
-                            ),
-                          ),
-                        ],
+                    Row(
+                      children: [
+                        Icon(Icons.local_fire_department, size: 16, color: Colors.red.shade400),
+                        const SizedBox(width: 4),
+                        Text('${report.jumlahUpvote} Dukungan', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.red.shade400)),
+                      ],
+                    ),
+                    const Text('3 Komentar', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                  ],
+                ),
+                
+                const SizedBox(height: 12),
+                Container(height: 1, color: Colors.grey.shade200),
+                const SizedBox(height: 12),
+                
+                // Top Comment
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(radius: 12, backgroundColor: Colors.blueGrey.shade100, child: const Text('S', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.blueGrey))),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: RichText(
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        text: const TextSpan(
+                          style: TextStyle(fontSize: 12, color: Colors.black87),
+                          children: [
+                            TextSpan(text: 'Siti Aminah ', style: TextStyle(fontWeight: FontWeight.bold)),
+                            TextSpan(text: 'Tadi pagi saya juga hampir kepeleset di sana. Bahaya banget!'),
+                          ],
+                        ),
                       ),
                     ),
-                    
-                    // Arrow Icon
-                    const Icon(Icons.arrow_forward_ios, size: 14, color: Colors.grey),
+                  ],
+                ),
+                const SizedBox(height: 12),
+
+                // Inline Comment Input
+                Row(
+                  children: [
+                    CircleAvatar(radius: 14, backgroundColor: Colors.grey.shade300, child: const Icon(Icons.person, size: 16, color: Colors.white)),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text('Tambahkan komentar...', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                      ),
+                    ),
                   ],
                 ),
               ],

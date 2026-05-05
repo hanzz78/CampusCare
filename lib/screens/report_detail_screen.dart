@@ -119,6 +119,43 @@ class ReportDetailScreen extends StatelessWidget {
                     ),
                   ),
                   
+                  const SizedBox(height: 24),
+                  
+                  // Tombol Dukungan Inline
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        // TODO: Implement Upvote Logic
+                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dukungan ditambahkan!')));
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.red.shade50,
+                        foregroundColor: Colors.red.shade400,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          side: BorderSide(color: Colors.red.shade200)
+                        ),
+                        elevation: 0,
+                      ),
+                      icon: const Icon(Icons.local_fire_department),
+                      label: Text('Berikan Dukungan (${report.jumlahUpvote})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 32),
+                  const Divider(color: Color(0xFFEEEEEE), thickness: 1.5),
+                  const SizedBox(height: 24),
+
+                  // Daftar Komentar Inline
+                  const Text('Komentar (3)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
+                  const SizedBox(height: 16),
+                  
+                  _buildCommentItem('Siti Aminah', 'Tadi pagi saya juga hampir kepeleset di sana. Bahaya banget!', '2 jam yang lalu'),
+                  _buildCommentItem('Budi Santoso', 'Harus segera diperbaiki sebelum ada korban.', '4 jam yang lalu'),
+                  _buildCommentItem('Andi Pratama', 'Iya nih, licin banget.', '1 hari yang lalu'),
+
                   // Extra space for bottom bar
                   const SizedBox(height: 100),
                 ],
@@ -128,9 +165,14 @@ class ReportDetailScreen extends StatelessWidget {
         ],
       ),
       
-      // Floating Bottom Action Bar (Upvote)
+      // Sticky Bottom Bar untuk Input Komentar
       bottomSheet: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        padding: EdgeInsets.only(
+          left: 16,
+          right: 16,
+          top: 12,
+          bottom: 12 + MediaQuery.of(context).viewInsets.bottom,
+        ),
         decoration: BoxDecoration(
           color: Colors.white,
           boxShadow: [
@@ -139,37 +181,80 @@ class ReportDetailScreen extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('Total Dukungan', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                Text(
-                  '${report.jumlahUpvote} Suara',
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.black87),
-                ),
-              ],
+            CircleAvatar(
+              radius: 18,
+              backgroundColor: Colors.blueGrey.shade100,
+              child: const Icon(Icons.person, color: Colors.white),
             ),
-            const SizedBox(width: 24),
+            const SizedBox(width: 12),
             Expanded(
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  // TODO: Implement Upvote Logic
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dukungan ditambahkan!')));
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red.shade400,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Tambahkan komentar...',
+                  hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  filled: true,
+                  fillColor: Colors.grey.shade100,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
+                  ),
                 ),
-                icon: const Icon(Icons.arrow_upward),
-                label: const Text('Berikan Dukungan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              ),
+            ),
+            const SizedBox(width: 8),
+            InkWell(
+              onTap: () {
+                // TODO: Aksi kirim komentar
+              },
+              borderRadius: BorderRadius.circular(24),
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  color: Color(0xFF3B696D),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.send, color: Colors.white, size: 18),
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildCommentItem(String name, String text, String time) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CircleAvatar(
+            radius: 18,
+            backgroundColor: Colors.grey.shade200,
+            child: Text(name[0], style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
+                    Text(time, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  text,
+                  style: const TextStyle(color: Colors.black87, fontSize: 14, height: 1.4),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
