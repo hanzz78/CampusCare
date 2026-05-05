@@ -18,7 +18,8 @@ class _HomeTabState extends State<HomeTab> {
     final feedProvider = context.watch<FeedProvider>();
     final reports = feedProvider.reports.where((r) {
       if (_activeTab == 'Semua Laporan') return true;
-      return r.kategori == _activeTab;
+      String targetTab = _activeTab == 'Sarana Prasarana' ? 'Sarpras' : _activeTab;
+      return r.kategori.utama == targetTab;
     }).toList();
 
     return Column(

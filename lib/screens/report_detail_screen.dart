@@ -151,13 +151,28 @@ class ReportDetailScreen extends StatelessWidget {
                   const Divider(color: Color(0xFFEEEEEE), thickness: 1.5),
                   const SizedBox(height: 24),
 
-                  // Daftar Komentar Inline
-                  const Text('Komentar (3)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
+                  // Daftar Komentar
+                  Text('Komentar (${report.comments.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
                   const SizedBox(height: 16),
                   
-                  _buildCommentItem('Siti Aminah', 'Tadi pagi saya juga hampir kepeleset di sana. Bahaya banget!', '2 jam yang lalu'),
-                  _buildCommentItem('Budi Santoso', 'Harus segera diperbaiki sebelum ada korban.', '4 jam yang lalu'),
-                  _buildCommentItem('Andi Pratama', 'Iya nih, licin banget.', '1 hari yang lalu'),
+                  if (report.comments.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 24),
+                      child: Center(
+                        child: Text(
+                          'Belum ada komentar. Jadilah yang pertama!',
+                          style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+                        ),
+                      ),
+                    ),
+
+                  ...report.comments.map((comment) {
+                    return _buildCommentItem(
+                      comment.penggunaId.substring(0, comment.penggunaId.length > 8 ? 8 : comment.penggunaId.length), // Samarkan ID
+                      comment.komentar,
+                      feedProvider.getTimeAgo(comment.waktu)
+                    );
+                  }).toList(),
 
                   // Extra space for bottom bar
                   const SizedBox(height: 100),

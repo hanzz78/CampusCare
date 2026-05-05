@@ -12,10 +12,16 @@ class ProfileTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final feedProvider = context.watch<FeedProvider>();
     
     // Fallback data if user is not fully loaded or we only have email
     final String email = authProvider.email ?? 'mahasiswa@polban.ac.id';
     final String name = authProvider.displayName ?? email.split('@')[0].toUpperCase();
+    final String role = authProvider.role == 'Admin' ? 'Administrator' : 'Mahasiswa';
+    
+    // Filter laporan milik user ini saja (sebagai contoh, filter by penggunaId)
+    // Jika tidak ada ID yang cocok, list akan kosong.
+    final myReports = feedProvider.reports.where((r) => r.penggunaId == email).toList();
     
     return Container(
       color: const Color(0xFF3B696D), // Latar belakang Teal untuk Header
@@ -25,7 +31,7 @@ class ProfileTab extends StatelessWidget {
           children: [
             const SizedBox(height: 16),
             // Header: Avatar, Name, Role, Stats
-            _buildHeader(name),
+            _buildHeader(name, role, myReports.length.toString(), '0'),
             const SizedBox(height: 24),
             // Konten Bawah (Lengkungan)
             Expanded(
@@ -50,7 +56,7 @@ class ProfileTab extends StatelessWidget {
                         },
                         child: _buildSectionTitle('My Reports'),
                       ),
-                      _buildMyReportsCard(),
+                      _buildMyReportsCard(myReports),
                       const SizedBox(height: 24),
                       _buildSectionTitle('Account'),
                       _buildMenuCard([
@@ -187,7 +193,7 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(String name) {
+  Widget _buildHeader(String name, String role, String pelaporanCount, String dukunganCount) {
     return Column(
       children: [
         // Avatar
@@ -199,11 +205,11 @@ class ProfileTab extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: Colors.white, width: 2),
             image: const DecorationImage(
-              image: AssetImage('assets/images/google_logo.png'), // Placeholder image (harus ada, atau pakai Icon)
+              image: AssetImage('assets/images/google_logo.png'), // Placeholder image
               fit: BoxFit.cover,
             ),
           ),
-          child: const Icon(Icons.person, size: 50, color: Colors.grey), // Fallback jika asset belum ada
+          child: const Icon(Icons.person, size: 50, color: Colors.grey),
         ),
         const SizedBox(height: 12),
         Text(
@@ -211,9 +217,9 @@ class ProfileTab extends StatelessWidget {
           style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
-        const Text(
-          'Gedung D • Mahasiswa',
-          style: TextStyle(color: Colors.white70, fontSize: 14),
+        Text(
+          'Polban • $role',
+          style: const TextStyle(color: Colors.white70, fontSize: 14),
         ),
         const SizedBox(height: 20),
         // Stats Box
@@ -227,9 +233,9 @@ class ProfileTab extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildStatItem('12', 'Pelaporan'),
+                _buildStatItem(pelaporanCount, 'Pelaporan'),
                 const VerticalDivider(color: Colors.white24, thickness: 1, width: 1, indent: 12, endIndent: 12),
-                _buildStatItem('54', 'Dukungan'),
+                _buildStatItem(dukunganCount, 'Dukungan'),
               ],
             ),
           ),
@@ -268,7 +274,21 @@ class ProfileTab extends StatelessWidget {
     );
   }
 
-  Widget _buildMyReportsCard() {
+  Widget _buildMyReportsCard(List<TiketModel> reports) {
+    if (reports.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: Colors.grey.shade300),
+        ),
+        child: const Center(child: Text('Belum ada laporan', style: TextStyle(color: Colors.grey))),
+      );
+    }
+
+    final displayReports = reports.take(2).toList();
+
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -276,11 +296,22 @@ class ProfileTab extends StatelessWidget {
         border: Border.all(color: Colors.grey.shade300),
       ),
       child: Column(
-        children: [
-          _buildReportRow('AC Bocor', 'Sarana Prasarana • Gedung D', const Color(0xFF3B696D)),
-          const Divider(height: 1, indent: 16, endIndent: 16),
-          _buildReportRow('Lantai Kotor', 'Kebersihan • Gedung D', const Color(0xFFE5A77A)),
-        ],
+        children: displayReports.asMap().entries.map((entry) {
+          final index = entry.key;
+          final report = entry.value;
+          final isLast = index == displayReports.length - 1;
+          
+          return Column(
+            children: [
+              _buildReportRow(
+                report.judulSingkat, 
+                '${report.kategori.utama} • ${report.lokasi.gedung}', 
+                report.kategori.utama == 'Sarpras' ? const Color(0xFF3B696D) : const Color(0xFFE5A77A)
+              ),
+              if (!isLast) const Divider(height: 1, indent: 16, endIndent: 16),
+            ],
+          );
+        }).toList(),
       ),
     );
   }
