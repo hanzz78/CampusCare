@@ -13,10 +13,7 @@ class ReportCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final feedProvider = context.read<FeedProvider>();
     final isSarpras = report.kategori.utama == 'Sarpras';
-    
-    final lokasiStr = report.deskripsiLokasi != null && report.deskripsiLokasi!.isNotEmpty 
-        ? report.deskripsiLokasi! 
-        : '${report.lokasi.gedung}, Lt ${report.lokasi.lantai}';
+    final lokasiStr = report.lokasiDisplay;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),

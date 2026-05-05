@@ -80,9 +80,7 @@ class AdminAllReportsTab extends StatelessWidget {
                     final isSarpras = tiket.kategori.utama == 'Sarpras';
                     final color = isSarpras ? const Color(0xFF3B696D) : const Color(0xFFE5A77A);
 
-                    final lokasiStr = tiket.deskripsiLokasi != null && tiket.deskripsiLokasi!.isNotEmpty 
-                        ? tiket.deskripsiLokasi! 
-                        : '${tiket.lokasi.gedung}, Lt ${tiket.lokasi.lantai}';
+                    final lokasiStr = tiket.lokasiDisplay;
 
                     return Card(
                       elevation: 0,

@@ -73,9 +73,7 @@ class ReportHistoryScreen extends StatelessWidget {
         ? const Color(0xFF3B696D)
         : const Color(0xFFE5A77A);
         
-    final lokasiStr = report.deskripsiLokasi != null && report.deskripsiLokasi!.isNotEmpty 
-        ? report.deskripsiLokasi! 
-        : '${report.lokasi.gedung}, Lt ${report.lokasi.lantai}';
+    final lokasiStr = report.lokasiDisplay;
 
     return InkWell(
       onTap: () {

@@ -126,6 +126,16 @@ class TiketModel {
     return map;
   }
 
+  String get lokasiDisplay {
+    final base = lokasi.lantai > 0 
+        ? '${lokasi.gedung}, Lt ${lokasi.lantai}'
+        : lokasi.gedung;
+    if (deskripsiLokasi != null && deskripsiLokasi!.isNotEmpty) {
+      return '$base · ${deskripsiLokasi!}';
+    }
+    return base;
+  }
+
   static DateTime _parseDate(dynamic date) {
     if (date == null) return DateTime.now();
     if (date is DateTime) return date;

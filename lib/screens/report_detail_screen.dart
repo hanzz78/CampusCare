@@ -35,9 +35,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     );
 
     final isSarpras = updatedReport.kategori.utama == 'Sarpras';
-    final lokasiStr = updatedReport.deskripsiLokasi != null && updatedReport.deskripsiLokasi!.isNotEmpty 
-        ? updatedReport.deskripsiLokasi! 
-        : '${updatedReport.lokasi.gedung}, Lt ${updatedReport.lokasi.lantai}';
+    final lokasiStr = updatedReport.lokasiDisplay;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),

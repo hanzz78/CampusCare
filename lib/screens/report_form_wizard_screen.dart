@@ -30,9 +30,12 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
     final provider = context.read<ReportFormProvider>();
     bool canProceed = false;
 
-    if (_currentStep == 0) canProceed = provider.isStep1Valid;
-    else if (_currentStep == 1) canProceed = provider.isStep2Valid;
-    else if (_currentStep == 2) canProceed = provider.isStep3Valid;
+    if (_currentStep == 0)
+      canProceed = provider.isStep1Valid;
+    else if (_currentStep == 1)
+      canProceed = provider.isStep2Valid;
+    else if (_currentStep == 2)
+      canProceed = provider.isStep3Valid;
 
     if (canProceed) {
       if (_currentStep < _totalSteps - 1) {
@@ -47,7 +50,9 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
       }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Harap lengkapi data pada tahap ini terlebih dahulu!')),
+        const SnackBar(
+          content: Text('Harap lengkapi data pada tahap ini terlebih dahulu!'),
+        ),
       );
     }
   }
@@ -85,29 +90,42 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 16.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16.0,
+                  vertical: 16.0,
+                ),
                 child: Row(
                   children: [
                     CircleAvatar(
                       backgroundColor: Colors.white,
                       radius: 20,
                       child: IconButton(
-                        icon: const Icon(Icons.arrow_back, color: Color(0xFF3B696D)),
+                        icon: const Icon(
+                          Icons.arrow_back,
+                          color: Color(0xFF3B696D),
+                        ),
                         onPressed: _prevStep,
                       ),
                     ),
                     const SizedBox(width: 16),
                     const Text(
                       'Laporan Baru',
-                      style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
               ),
-              
+
               // Step Indicator
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 8.0),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 32.0,
+                  vertical: 8.0,
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(_totalSteps, (index) {
@@ -126,7 +144,9 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                               child: Text(
                                 '${index + 1}',
                                 style: TextStyle(
-                                  color: isActive ? const Color(0xFF3B696D) : Colors.white,
+                                  color: isActive
+                                      ? const Color(0xFF3B696D)
+                                      : Colors.white,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -149,89 +169,144 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
               const SizedBox(height: 16),
 
               // Main Content Area
-            Expanded(
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-                ),
-                child: Column(
-                  children: [
-                    // PageView for content
-                    Expanded(
-                      child: PageView(
-                        controller: _pageController,
-                        physics: const NeverScrollableScrollPhysics(), // Disable swipe
-                        children: [
-                          _buildStep1Image(context),
-                          _buildStep2CategoryLocation(context),
-                          _buildStep3Details(context),
-                          _buildStep4Review(context),
-                        ],
-                      ),
+              Expanded(
+                child: Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.vertical(
+                      top: Radius.circular(32),
                     ),
-
-                    // Bottom Navigation Button
-                    Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: ElevatedButton(
-                          onPressed: _isSubmitting ? null : () async {
-                            if (_currentStep == _totalSteps - 1) {
-                              // Submit Report
-                              setState(() { _isSubmitting = true; });
-                              try {
-                                final authProvider = context.read<AuthProvider>();
-                                final formProvider = context.read<ReportFormProvider>();
-                                
-                                final email = authProvider.email ?? 'mahasiswa@polban.ac.id';
-                                final userId = authProvider.userId ?? '6672a1b4f3c3c3c3c3c3c3c1'; // Fallback aman
-                                
-                                await formProvider.submitReport(email, userId);
-                                
-                                // Segarkan Beranda
-                                context.read<FeedProvider>().fetchReports();
-
-                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Laporan Berhasil Diunggah!')));
-                                formProvider.resetForm();
-                                Navigator.pop(context);
-                              } catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal mengirim laporan: $e')));
-                              } finally {
-                                if (mounted) {
-                                  setState(() { _isSubmitting = false; });
-                                }
-                              }
-                            } else {
-                              _nextStep();
-                            }
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: _currentStep == _totalSteps - 1 ? const Color(0xFFA03232) : const Color(0xFF3B696D), // Merah untuk akhir
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                            elevation: 0,
-                          ),
-                          child: _isSubmitting 
-                            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                            : Text(
-                                _currentStep == _totalSteps - 1 ? 'Unggah Pelaporan' : 'Selanjutnya',
-                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                              ),
+                  ),
+                  child: Column(
+                    children: [
+                      // PageView for content
+                      Expanded(
+                        child: PageView(
+                          controller: _pageController,
+                          physics:
+                              const NeverScrollableScrollPhysics(), // Disable swipe
+                          children: [
+                            _buildStep1Image(context),
+                            _buildStep2CategoryLocation(context),
+                            _buildStep3Details(context),
+                            _buildStep4Review(context),
+                          ],
                         ),
                       ),
-                    ),
-                  ],
+
+                      // Bottom Navigation Button
+                      Padding(
+                        padding: const EdgeInsets.all(24.0),
+                        child: SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: ElevatedButton(
+                            onPressed: _isSubmitting
+                                ? null
+                                : () async {
+                                    if (_currentStep == _totalSteps - 1) {
+                                      // Submit Report
+                                      setState(() {
+                                        _isSubmitting = true;
+                                      });
+                                      try {
+                                        final authProvider = context
+                                            .read<AuthProvider>();
+                                        final formProvider = context
+                                            .read<ReportFormProvider>();
+
+                                        final email =
+                                            authProvider.email ??
+                                            'mahasiswa@polban.ac.id';
+                                        final userId =
+                                            authProvider.userId ??
+                                            '6672a1b4f3c3c3c3c3c3c3c1'; // Fallback aman
+
+                                        await formProvider.submitReport(
+                                          email,
+                                          userId,
+                                        );
+
+                                        // Segarkan Beranda
+                                        context
+                                            .read<FeedProvider>()
+                                            .fetchReports();
+
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          const SnackBar(
+                                            content: Text(
+                                              'Laporan Berhasil Diunggah!',
+                                            ),
+                                          ),
+                                        );
+                                        formProvider.resetForm();
+                                        Navigator.pop(context);
+                                      } catch (e) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              'Gagal mengirim laporan: $e',
+                                            ),
+                                          ),
+                                        );
+                                      } finally {
+                                        if (mounted) {
+                                          setState(() {
+                                            _isSubmitting = false;
+                                          });
+                                        }
+                                      }
+                                    } else {
+                                      _nextStep();
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: _currentStep == _totalSteps - 1
+                                  ? const Color(0xFFA03232)
+                                  : const Color(
+                                      0xFF3B696D,
+                                    ), // Merah untuk akhir
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              elevation: 0,
+                            ),
+                            child: _isSubmitting
+                                ? const SizedBox(
+                                    width: 24,
+                                    height: 24,
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
+                                  )
+                                : Text(
+                                    _currentStep == _totalSteps - 1
+                                        ? 'Unggah Pelaporan'
+                                        : 'Selanjutnya',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // --- STEP 1: UPLOAD IMAGE ---
   Widget _buildStep1Image(BuildContext context) {
@@ -243,15 +318,24 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Bukti Kerusakan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF5A7184))),
+          const Text(
+            'Bukti Kerusakan',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF5A7184),
+            ),
+          ),
           const SizedBox(height: 16),
           Expanded(
             child: GestureDetector(
-              onTap: hasImage 
-                  ? null 
+              onTap: hasImage
+                  ? null
                   : () async {
                       final picker = ImagePicker();
-                      final image = await picker.pickImage(source: ImageSource.gallery);
+                      final image = await picker.pickImage(
+                        source: ImageSource.gallery,
+                      );
                       if (image != null) {
                         provider.setImagePath(image.path);
                       }
@@ -262,7 +346,9 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: hasImage ? const Color(0xFF3B696D) : Colors.grey.shade300,
+                    color: hasImage
+                        ? const Color(0xFF3B696D)
+                        : Colors.grey.shade300,
                     width: 2,
                     style: BorderStyle.solid,
                   ),
@@ -270,14 +356,27 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                 child: hasImage
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(14),
-                        child: Image.file(File(provider.imagePath!), fit: BoxFit.cover),
+                        child: Image.file(
+                          File(provider.imagePath!),
+                          fit: BoxFit.cover,
+                        ),
                       )
                     : Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.camera_alt, size: 48, color: Colors.grey.shade400),
+                          Icon(
+                            Icons.camera_alt,
+                            size: 48,
+                            color: Colors.grey.shade400,
+                          ),
                           const SizedBox(height: 8),
-                          Text('Ketuk untuk mengambil foto', style: TextStyle(color: Colors.grey.shade500, fontSize: 16)),
+                          Text(
+                            'Ketuk untuk mengambil foto',
+                            style: TextStyle(
+                              color: Colors.grey.shade500,
+                              fontSize: 16,
+                            ),
+                          ),
                         ],
                       ),
               ),
@@ -289,7 +388,10 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () {
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const CameraScreen()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CameraScreen()),
+                );
               },
               icon: const Icon(Icons.camera),
               label: const Text('Buka Kamera'),
@@ -297,7 +399,9 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                 foregroundColor: const Color(0xFF3B696D),
                 side: const BorderSide(color: Color(0xFF3B696D)),
                 padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
             ),
           ),
@@ -306,56 +410,90 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
     );
   }
 
-  // --- STEP 2: CATEGORY & LOCATION ---
+  List<String> _getTitleOptions(String? utama, String? jenis) {
+    if (utama == 'Sarana Prasarana') {
+      if (jenis == 'Elektronik') {
+        return [
+          'AC Mati',
+          'Proyektor Rusak',
+          'Komputer Rusak',
+          'Lampu Ruang Mati',
+          'Kipas Angin Tidak Berputar',
+          'Stop Kontak Rusak',
+        ];
+      }
+      if (jenis == 'Non Elektronik') {
+        return [
+          'Pintu Rusak',
+          'Kursi Retak',
+          'Meja Patah',
+          'Jendela Pecah',
+          'Plafon Bocor',
+          'Kunci Tidak Berfungsi',
+        ];
+      }
+    }
+
+    if (utama == 'Kebersihan') {
+      if (jenis == 'Fasilitas Sanitasi') {
+        return [
+          'Kloset Mampet / Kotor',
+          'Wastafel Tersumbat / Kotor',
+          'Lantai Toilet Tergenang / Sangat Licin',
+          'Bau Tidak Sedap / Menyengat',
+          'Tempat Sampah Penuh',
+        ];
+      }
+      if (jenis == 'Dalam Ruangan') {
+        return [
+          'Lantai Kotor / Lengket / Berdebu',
+          'Sampah Berserakan / Tertinggal di Laci',
+          'Tempat Sampah Ruangan Penuh / Meluber',
+          'Tumpahan Cairan / Sisa Makanan',
+          'Jaring Laba-laba / Debu Tebal (Plafon/Sudut Ruangan)',
+          'Ada Bangkai Hewan / Hama (Tikus, Kecoa, dsb)',
+        ];
+      }
+      if (jenis == 'Luar Ruangan') {
+        return [
+          'Sampah / Daun Kering Berserakan & Menumpuk',
+          'Selokan / Saluran Air Pembuangan Mampet',
+          'Tempat Sampah Umum Terbuka Penuh / Tumpah',
+          'Genangan Lumpur / Lumut Licin di Area Jalan',
+          'Vandalisme / Coretan di Dinding atau Fasilitas Umum',
+          'Sisa Makanan Tertinggal di Area Terbuka (Kantin/Pendopo)',
+        ];
+      }
+    }
+    return [];
+  }
+
+  // --- STEP 2: LOCATION ---
   Widget _buildStep2CategoryLocation(BuildContext context) {
     final provider = context.watch<ReportFormProvider>();
-    final categories = [
-      {'name': 'Sarana Prasarana', 'icon': Icons.business},
-      {'name': 'Kebersihan', 'icon': Icons.cleaning_services},
+    final buildings = [
+      'Gedung A',
+      'Gedung B',
+      'Gedung C',
+      'Gedung D',
+      'Gedung E',
+      'Masjid',
+      'Perpustakaan',
     ];
-    final buildings = ['Gedung A', 'Gedung B', 'Gedung C', 'Gedung D', 'Gedung E', 'Masjid', 'Perpustakaan'];
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Kategori', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF5A7184))),
-          const SizedBox(height: 16),
-          Row(
-            children: categories.map((cat) {
-              final isActive = provider.kategori == cat['name'];
-              return Expanded(
-                child: GestureDetector(
-                  onTap: () => provider.setKategori(cat['name'] as String),
-                  child: Container(
-                    margin: EdgeInsets.only(right: cat == categories.first ? 12 : 0, left: cat == categories.last ? 12 : 0),
-                    padding: const EdgeInsets.symmetric(vertical: 24),
-                    decoration: BoxDecoration(
-                      color: isActive ? Colors.grey.shade200 : Colors.white,
-                      border: Border.all(color: isActive ? const Color(0xFF3B696D) : Colors.grey.shade300, width: isActive ? 2 : 1),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(cat['icon'] as IconData, size: 32, color: isActive ? const Color(0xFF3B696D) : Colors.grey.shade400),
-                        const SizedBox(height: 12),
-                        Text(
-                          cat['name'] as String,
-                          style: TextStyle(
-                            color: isActive ? const Color(0xFF3B696D) : Colors.grey.shade500,
-                            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }).toList(),
+          const Text(
+            'Lokasi',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF5A7184),
+            ),
           ),
-          const SizedBox(height: 32),
-          const Text('Gedung / Lokasi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF5A7184))),
           const SizedBox(height: 16),
           Wrap(
             spacing: 12,
@@ -365,65 +503,262 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
               return GestureDetector(
                 onTap: () => provider.setGedung(gedung),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
+                  ),
                   decoration: BoxDecoration(
                     color: isActive ? const Color(0xFF3B696D) : Colors.white,
-                    border: Border.all(color: isActive ? const Color(0xFF3B696D) : Colors.grey.shade300),
+                    border: Border.all(
+                      color: isActive
+                          ? const Color(0xFF3B696D)
+                          : Colors.grey.shade300,
+                    ),
                     borderRadius: BorderRadius.circular(24),
                   ),
                   child: Text(
                     gedung,
                     style: TextStyle(
                       color: isActive ? Colors.white : Colors.grey.shade600,
-                      fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                      fontWeight: isActive
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
               );
             }).toList(),
           ),
+          const SizedBox(height: 32),
+          const Text(
+            'Keterangan Tempat (opsional)',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF5A7184),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            initialValue: provider.deskripsiLokasi,
+            onChanged: (val) => provider.setDeskripsiLokasi(val),
+            maxLines: 4,
+            decoration: InputDecoration(
+              hintText: 'Contoh: Ruang kelas 204 dekat pintu utama',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFF3B696D),
+                  width: 2,
+                ),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+          ),
         ],
       ),
     );
   }
 
-  // --- STEP 3: DETAILS ---
+  // --- STEP 3: CATEGORY & PROBLEM TYPE ---
   Widget _buildStep3Details(BuildContext context) {
     final provider = context.watch<ReportFormProvider>();
+    final categories = [
+      {'name': 'Sarana Prasarana', 'icon': Icons.business},
+      {'name': 'Kebersihan', 'icon': Icons.cleaning_services},
+    ];
+    final sarprasTypes = ['Elektronik', 'Non Elektronik'];
+    final kebersihanTypes = [
+      'Fasilitas Sanitasi',
+      'Dalam Ruangan',
+      'Luar Ruangan',
+    ];
+    final titleOptions = _getTitleOptions(
+      provider.kategoriUtama,
+      provider.kategoriJenis,
+    );
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(24.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Judul Laporan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF5A7184))),
-          const SizedBox(height: 12),
-          TextFormField(
-            initialValue: provider.judul,
-            onChanged: (val) => provider.setJudul(val),
-            decoration: InputDecoration(
-              hintText: 'Contoh: AC Bocor di Kelas',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF3B696D), width: 2)),
-              filled: true,
-              fillColor: Colors.white,
+          const Text(
+            'Kategori Masalah',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF5A7184),
             ),
           ),
-          const SizedBox(height: 24),
-          const Text('Deskripsi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF5A7184))),
-          const SizedBox(height: 12),
-          TextFormField(
-            initialValue: provider.deskripsi,
-            onChanged: (val) => provider.setDeskripsi(val),
-            maxLines: 6,
-            decoration: InputDecoration(
-              hintText: 'Deskripsikan permasalahan yang terjadi...',
-              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide(color: Colors.grey.shade300)),
-              focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF3B696D), width: 2)),
-              filled: true,
-              fillColor: Colors.white,
-            ),
+          const SizedBox(height: 16),
+          Row(
+            children: categories.map((cat) {
+              final isActive = provider.kategoriUtama == cat['name'];
+              return Expanded(
+                child: GestureDetector(
+                  onTap: () => provider.setKategoriUtama(cat['name'] as String),
+                  child: Container(
+                    margin: EdgeInsets.only(
+                      right: cat == categories.first ? 12 : 0,
+                      left: cat == categories.last ? 12 : 0,
+                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    decoration: BoxDecoration(
+                      color: isActive ? Colors.grey.shade200 : Colors.white,
+                      border: Border.all(
+                        color: isActive
+                            ? const Color(0xFF3B696D)
+                            : Colors.grey.shade300,
+                        width: isActive ? 2 : 1,
+                      ),
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    child: Column(
+                      children: [
+                        Icon(
+                          cat['icon'] as IconData,
+                          size: 32,
+                          color: isActive
+                              ? const Color(0xFF3B696D)
+                              : Colors.grey.shade400,
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          cat['name'] as String,
+                          style: TextStyle(
+                            color: isActive
+                                ? const Color(0xFF3B696D)
+                                : Colors.grey.shade500,
+                            fontWeight: isActive
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
           ),
+          if (provider.kategoriUtama != null) ...[
+            const SizedBox(height: 32),
+            const Text(
+              'Subkategori',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5A7184),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Wrap(
+              spacing: 12,
+              runSpacing: 12,
+              children:
+                  (provider.kategoriUtama == 'Sarana Prasarana'
+                          ? sarprasTypes
+                          : kebersihanTypes)
+                      .map((type) {
+                        final isActive = provider.kategoriJenis == type;
+                        return GestureDetector(
+                          onTap: () => provider.setKategoriJenis(type),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 10,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isActive
+                                  ? const Color(0xFF3B696D)
+                                  : Colors.white,
+                              border: Border.all(
+                                color: isActive
+                                    ? const Color(0xFF3B696D)
+                                    : Colors.grey.shade300,
+                              ),
+                              borderRadius: BorderRadius.circular(24),
+                            ),
+                            child: Text(
+                              type,
+                              style: TextStyle(
+                                color: isActive
+                                    ? Colors.white
+                                    : Colors.grey.shade600,
+                                fontWeight: isActive
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                        );
+                      })
+                      .toList(),
+            ),
+          ],
+          if (provider.kategoriJenis != null) ...[
+            const SizedBox(height: 32),
+            const Text(
+              'Pilih Judul Laporan',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF5A7184),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Column(
+              children: titleOptions.map((title) {
+                final isSelected = provider.judul == title;
+                return Card(
+                  color: isSelected ? const Color(0xFF3B696D) : Colors.white,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    side: BorderSide(
+                      color: isSelected
+                          ? const Color(0xFF3B696D)
+                          : Colors.grey.shade300,
+                    ),
+                  ),
+                  child: ListTile(
+                    title: Text(
+                      title,
+                      style: TextStyle(
+                        color: isSelected ? Colors.white : Colors.black87,
+                      ),
+                    ),
+                    trailing: isSelected
+                        ? const Icon(Icons.check_circle, color: Colors.white)
+                        : null,
+                    onTap: () => provider.setJudul(title),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+          if (provider.kategoriUtama == null) ...[
+            const SizedBox(height: 24),
+            Text(
+              'Pilih kategori utama untuk menampilkan subkategori dan judul laporan.',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ],
+          if (provider.kategoriUtama != null &&
+              provider.kategoriJenis == null) ...[
+            const SizedBox(height: 24),
+            Text(
+              'Pilih subkategori terlebih dahulu untuk melihat opsi judul.',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ],
         ],
       ),
     );
@@ -437,21 +772,71 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Ringkasan Laporan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF3B696D))),
+          const Text(
+            'Ringkasan Laporan',
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF3B696D),
+            ),
+          ),
           const SizedBox(height: 24),
           if (provider.imagePath != null)
             ClipRRect(
               borderRadius: BorderRadius.circular(16),
-              child: Image.file(File(provider.imagePath!), height: 200, width: double.infinity, fit: BoxFit.cover),
+              child: Image.file(
+                File(provider.imagePath!),
+                height: 200,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              ),
             ),
           const SizedBox(height: 24),
-          _buildReviewRow('Kategori', provider.kategori ?? '-'),
+          _buildReviewRow('Kategori', provider.kategoriUtama ?? '-'),
+          const Divider(),
+          _buildReviewRow('Subkategori', provider.kategoriJenis ?? '-'),
           const Divider(),
           _buildReviewRow('Lokasi', provider.gedung ?? '-'),
+          if (provider.deskripsiLokasi.isNotEmpty) ...[
+            const Divider(),
+            _buildReviewRow('Keterangan Tempat', provider.deskripsiLokasi),
+          ],
           const Divider(),
-          _buildReviewRow('Judul', provider.judul.isNotEmpty ? provider.judul : '-'),
-          const Divider(),
-          _buildReviewRow('Deskripsi', provider.deskripsi.isNotEmpty ? provider.deskripsi : '-'),
+          _buildReviewRow(
+            'Judul',
+            provider.judul.isNotEmpty ? provider.judul : '-',
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            'Deskripsi Masalah',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF5A7184),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            initialValue: provider.deskripsi,
+            onChanged: (val) => provider.setDeskripsi(val),
+            maxLines: 6,
+            decoration: InputDecoration(
+              hintText: 'Tuliskan deskripsi detail masalah, wajib diisi',
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Color(0xFF3B696D),
+                  width: 2,
+                ),
+              ),
+              filled: true,
+              fillColor: Colors.white,
+            ),
+          ),
         ],
       ),
     );
@@ -463,8 +848,25 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(width: 100, child: Text(label, style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.w500))),
-          Expanded(child: Text(value, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black87))),
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+          ),
         ],
       ),
     );

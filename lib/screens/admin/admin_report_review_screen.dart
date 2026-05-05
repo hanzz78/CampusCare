@@ -18,9 +18,7 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
   @override
   Widget build(BuildContext context) {
     final isSarpras = widget.report.kategori.utama == 'Sarpras';
-    final lokasiStr = widget.report.deskripsiLokasi != null && widget.report.deskripsiLokasi!.isNotEmpty 
-        ? widget.report.deskripsiLokasi! 
-        : '${widget.report.lokasi.gedung}, Lt ${widget.report.lokasi.lantai}';
+    final lokasiStr = widget.report.lokasiDisplay;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
