@@ -222,13 +222,15 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
           const SizedBox(height: 16),
           Expanded(
             child: GestureDetector(
-              onTap: () async {
-                final picker = ImagePicker();
-                final image = await picker.pickImage(source: ImageSource.gallery);
-                if (image != null) {
-                  provider.setImagePath(image.path);
-                }
-              },
+              onTap: hasImage 
+                  ? null 
+                  : () async {
+                      final picker = ImagePicker();
+                      final image = await picker.pickImage(source: ImageSource.gallery);
+                      if (image != null) {
+                        provider.setImagePath(image.path);
+                      }
+                    },
               child: Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
