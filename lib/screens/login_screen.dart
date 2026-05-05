@@ -46,7 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   
                       if (context.mounted) {
                         if (ap.isLoggedIn) {
-                          if (ap.role == 'Admin') {
+                          if (ap.role == 'Penanggung Jawab') {
                             Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),

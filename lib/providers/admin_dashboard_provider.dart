@@ -19,68 +19,53 @@ class AdminDashboardProvider extends ChangeNotifier {
     fetchDashboardStats();
   }
 
-  int get totalMasuk => _reports.length;
-  int get pendingCount => _reports.where((t) => t.statusTiket == 'PENDING_REVIEW' || t.statusTiket == 'SUBMITTED').length;
+  // 1. Statistik Angka
+  int get totalLaporan => _reports.length;
+  int get belumDireview => _reports.where((t) => t.statusTiket == 'PENDING_REVIEW' || t.statusTiket == 'SUBMITTED').length;
+  int get selesai => _reports.where((t) => t.statusTiket == 'APPROVED' || t.statusTiket == 'REJECTED' || t.statusTiket == 'RESOLVED' || t.statusTiket == 'CLOSED').length;
   
-  // Asumsi dummy waktu respons, bisa diganti perhitungan dinamis nantinya
-  String get waktuRespons => '0 Jam';
-
-  String get resolusiPercentage {
-    if (_reports.isEmpty) return '0%';
-    int resolved = _reports.where((t) => t.statusTiket == 'RESOLVED' || t.statusTiket == 'CLOSED').length;
-    return '${((resolved / _reports.length) * 100).toStringAsFixed(0)}%';
+  // 2. Daftar Laporan Masuk
+  List<TiketModel> get laporanMasuk {
+    // Menampilkan hanya yang butuh review/tindakan
+    return _reports.where((t) => t.statusTiket == 'PENDING_REVIEW' || t.statusTiket == 'SUBMITTED').toList();
   }
 
-  // Statistik Kategori
+  // 3. Statistik Kategori
+  int get sarprasCount => _reports.where((t) => t.kategori == 'Sarpras').length;
+  int get kebersihanCount => _reports.where((t) => t.kategori == 'Kebersihan').length;
+
   double get sarprasPercentage {
     if (_reports.isEmpty) return 0;
-    return (_reports.where((t) => t.kategori == 'Sarpras').length / _reports.length) * 100;
+    return (sarprasCount / _reports.length) * 100;
   }
   
   double get kebersihanPercentage {
     if (_reports.isEmpty) return 0;
-    return (_reports.where((t) => t.kategori == 'Kebersihan').length / _reports.length) * 100;
+    return (kebersihanCount / _reports.length) * 100;
   }
 
-  // Statistik Status untuk Pie Chart
-  double get pendingPercentage {
-    if (_reports.isEmpty) return 0;
-    return (pendingCount / _reports.length) * 100;
-  }
+  // 4. Urgensi (Berdasarkan Upvote sebagai Simulasi)
+  int get urgensiHigh => _reports.where((t) => t.jumlahUpvote >= 15).length;
+  int get urgensiMedium => _reports.where((t) => t.jumlahUpvote >= 5 && t.jumlahUpvote < 15).length;
+  int get urgensiLow => _reports.where((t) => t.jumlahUpvote < 5).length;
 
-  double get approvedPercentage {
-    if (_reports.isEmpty) return 0;
-    int count = _reports.where((t) => t.statusTiket == 'APPROVED' || t.statusTiket == 'IN_PROGRESS').length;
-    return (count / _reports.length) * 100;
-  }
-
-  double get rejectedPercentage {
-    if (_reports.isEmpty) return 0;
-    int count = _reports.where((t) => t.statusTiket == 'REJECTED').length;
-    return (count / _reports.length) * 100;
-  }
-
-  double get resolvedPercentage {
-    if (_reports.isEmpty) return 0;
-    int count = _reports.where((t) => t.statusTiket == 'RESOLVED' || t.statusTiket == 'CLOSED').length;
-    return (count / _reports.length) * 100;
-  }
 
   Future<void> fetchDashboardStats() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
-    // Simulasi delay ringan
+    // Simulasi delay jaringan
     await Future.delayed(const Duration(milliseconds: 800));
 
-    // Data Dummy simulasi JSON agar grafik bisa tampil (seperti dashboard user yang statis)
+    // Data Dummy dengan upvote & lokasi untuk UI yang lebih realistis
     final List<Map<String, dynamic>> dummyJson = [
-      {'_id': '1', 'local_id': 'loc1', 'user_id': 'u1', 'kategori': 'Sarpras', 'lokasi_detail': 'Gedung A', 'deskripsi': 'AC Rusak', 'foto_paths': [], 'status_tiket': 'PENDING_REVIEW', 'created_at': DateTime.now().subtract(const Duration(days: 1)).toIso8601String()},
-      {'_id': '2', 'local_id': 'loc2', 'user_id': 'u2', 'kategori': 'Kebersihan', 'lokasi_detail': 'Toilet B', 'deskripsi': 'Kotor', 'foto_paths': [], 'status_tiket': 'RESOLVED', 'created_at': DateTime.now().subtract(const Duration(days: 3)).toIso8601String()},
-      {'_id': '3', 'local_id': 'loc3', 'user_id': 'u3', 'kategori': 'Sarpras', 'lokasi_detail': 'Lab C', 'deskripsi': 'Proyektor mati', 'foto_paths': [], 'status_tiket': 'APPROVED', 'created_at': DateTime.now().subtract(const Duration(days: 2)).toIso8601String()},
-      {'_id': '4', 'local_id': 'loc4', 'user_id': 'u4', 'kategori': 'Kebersihan', 'lokasi_detail': 'Taman', 'deskripsi': 'Sampah', 'foto_paths': [], 'status_tiket': 'REJECTED', 'created_at': DateTime.now().toIso8601String()},
-      {'_id': '5', 'local_id': 'loc5', 'user_id': 'u5', 'kategori': 'Sarpras', 'lokasi_detail': 'Gedung D', 'deskripsi': 'Kursi patah', 'foto_paths': [], 'status_tiket': 'PENDING_REVIEW', 'created_at': DateTime.now().toIso8601String()},
+      {'_id': '1', 'local_id': 'loc1', 'user_id': 'u1', 'kategori': 'Sarpras', 'judul': 'AC Bocor Parah', 'lokasi_detail': 'Gedung D, Lt 2', 'deskripsi': 'Air menetes ke lantai', 'foto_paths': [], 'jumlah_upvote': 20, 'status_tiket': 'PENDING_REVIEW', 'created_at': DateTime.now().subtract(const Duration(days: 0)).toIso8601String()},
+      {'_id': '2', 'local_id': 'loc2', 'user_id': 'u2', 'kategori': 'Kebersihan', 'judul': 'Lantai Lengket', 'lokasi_detail': 'Kantin Utama', 'deskripsi': 'Banyak tumpahan minuman', 'foto_paths': [], 'jumlah_upvote': 3, 'status_tiket': 'PENDING_REVIEW', 'created_at': DateTime.now().subtract(const Duration(days: 1)).toIso8601String()},
+      {'_id': '3', 'local_id': 'loc3', 'user_id': 'u3', 'kategori': 'Sarpras', 'judul': 'Proyektor Mati', 'lokasi_detail': 'Lab Komputer C', 'deskripsi': 'Lampu indikator merah', 'foto_paths': [], 'jumlah_upvote': 10, 'status_tiket': 'APPROVED', 'created_at': DateTime.now().subtract(const Duration(days: 2)).toIso8601String()},
+      {'_id': '4', 'local_id': 'loc4', 'user_id': 'u4', 'kategori': 'Kebersihan', 'judul': 'Sampah Menumpuk', 'lokasi_detail': 'Taman Depan', 'deskripsi': 'Belum diambil 3 hari', 'foto_paths': [], 'jumlah_upvote': 8, 'status_tiket': 'REJECTED', 'created_at': DateTime.now().subtract(const Duration(days: 3)).toIso8601String()},
+      {'_id': '5', 'local_id': 'loc5', 'user_id': 'u5', 'kategori': 'Sarpras', 'judul': 'Kursi Patah', 'lokasi_detail': 'Ruang Tunggu Dosen', 'deskripsi': 'Kaki kursi patah satu', 'foto_paths': [], 'jumlah_upvote': 1, 'status_tiket': 'PENDING_REVIEW', 'created_at': DateTime.now().subtract(const Duration(days: 4)).toIso8601String()},
+      {'_id': '6', 'local_id': 'loc6', 'user_id': 'u6', 'kategori': 'Sarpras', 'judul': 'Pintu Rusak', 'lokasi_detail': 'Toilet Gedung A', 'deskripsi': 'Tidak bisa dikunci', 'foto_paths': [], 'jumlah_upvote': 25, 'status_tiket': 'PENDING_REVIEW', 'created_at': DateTime.now().subtract(const Duration(days: 1)).toIso8601String()},
     ];
 
     _reports = dummyJson.map((json) => TiketModel.fromJson(json)).toList();

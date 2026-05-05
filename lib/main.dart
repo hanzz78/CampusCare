@@ -41,7 +41,7 @@ class MyApp extends StatelessWidget {
         builder: (context, auth, child) {
           // Auto Routing: Kalau udah login, lempar ke Dashboard. Kalau belum, ke Login.
           if (auth.isLoggedIn) {
-            if (auth.role == 'Admin') {
+            if (auth.role == 'Penanggung Jawab') {
               return const AdminDashboardScreen();
             }
             return DashboardScreen(role: auth.role);

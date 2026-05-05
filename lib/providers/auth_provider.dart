@@ -68,12 +68,12 @@ class AuthProvider extends ChangeNotifier {
 
         if (adminDoc.exists) {
           // 🎉 DIA ADALAH PENANGGUNG JAWAB (ADMIN)
-          _role = 'Admin';
+          _role = 'Penanggung Jawab';
           _isLoggedIn = true;
           
           // Simpan status admin di SharedPreferences agar tidak hilang saat restart
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('userRole', 'Admin');
+          await prefs.setString('userRole', 'Penanggung Jawab');
           await prefs.setBool('isLoggedIn', true);
           
           print("Login sebagai Admin terdeteksi!");
