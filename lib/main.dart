@@ -9,12 +9,31 @@ import 'providers/feed_provider.dart';
 import 'providers/report_form_provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
-import 'screens/admin/admin_dashboard_screen.dart';
+import 'screens/admin/admin_shell_screen.dart';
+
+import 'package:flutter/foundation.dart'; // import kDebugMode
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // import dotenv
+import 'services/mongo_service.dart'; // import MongoService
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-await Firebase.initializeApp();
+  await Firebase.initializeApp();
+
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+
+  // Hubungkan ke MongoDB Atlas saat aplikasi menyala
+  try {
+    await MongoService().connect();
+    if (kDebugMode) {
+      print('✅ MongoDB Atlas Initialized in main()');
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print('❌ Failed to connect to MongoDB: $e');
+    }
+  }
 
   runApp(
     MultiProvider(
@@ -42,7 +61,7 @@ class MyApp extends StatelessWidget {
           // Auto Routing: Kalau udah login, lempar ke Dashboard. Kalau belum, ke Login.
           if (auth.isLoggedIn) {
             if (auth.role == 'Penanggung Jawab') {
-              return const AdminDashboardScreen();
+              return const AdminShellScreen();
             }
             return DashboardScreen(role: auth.role);
           }

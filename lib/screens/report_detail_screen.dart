@@ -11,7 +11,10 @@ class ReportDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final feedProvider = context.read<FeedProvider>();
-    final isSarpras = report.kategori == 'Sarana Prasarana';
+    final isSarpras = report.kategori.utama == 'Sarpras';
+    final lokasiStr = report.deskripsiLokasi != null && report.deskripsiLokasi!.isNotEmpty 
+        ? report.deskripsiLokasi! 
+        : '${report.lokasi.gedung}, Lt ${report.lokasi.lantai}';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -65,7 +68,7 @@ class ReportDetailScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          report.kategori,
+                          report.kategori.utama,
                           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -79,7 +82,7 @@ class ReportDetailScreen extends StatelessWidget {
                   
                   // Title
                   Text(
-                    report.judul,
+                    report.judulSingkat,
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -95,7 +98,7 @@ class ReportDetailScreen extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          report.lokasiDetail,
+                          lokasiStr,
                           style: const TextStyle(fontSize: 14, color: Colors.blueGrey, fontWeight: FontWeight.w500),
                         ),
                       ),
@@ -111,7 +114,7 @@ class ReportDetailScreen extends StatelessWidget {
                   const Text('Deskripsi Laporan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
                   const SizedBox(height: 12),
                   Text(
-                    report.deskripsi,
+                    report.deskripsiTiket,
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.black87,
@@ -140,7 +143,7 @@ class ReportDetailScreen extends StatelessWidget {
                         elevation: 0,
                       ),
                       icon: const Icon(Icons.local_fire_department),
-                      label: Text('Berikan Dukungan (${report.jumlahUpvote})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      label: Text('Berikan Dukungan (${report.jumlahVote})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                   

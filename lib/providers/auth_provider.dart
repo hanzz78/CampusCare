@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../services/mongo_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
@@ -61,39 +62,27 @@ class AuthProvider extends ChangeNotifier {
           throw 'Harus menggunakan email @polban.ac.id';
         }
 
-        // --- PROSES VALIDASI ROLE (EKSKLUSIF) ---
+        // --- PROSES VALIDASI ROLE VIA MONGODB ---
         
-        // 1. Cek apakah email ada di koleksi admin_whitelist?
-        final adminDoc = await _db.collection('admin_whitelist').doc(user.email).get();
+        // 1. Cek apakah email ada di koleksi users MongoDB
+        final userDoc = await MongoService().findUserByEmail(user.email!);
 
-        if (adminDoc.exists) {
-          // 🎉 DIA ADALAH PENANGGUNG JAWAB (ADMIN)
-          _role = 'Penanggung Jawab';
+        if (userDoc != null) {
+          // 🎉 USER DITEMUKAN DI MONGODB
+          _role = userDoc['role'] ?? 'User';
           _isLoggedIn = true;
           
-          // Simpan status admin di SharedPreferences agar tidak hilang saat restart
+          // Simpan status di SharedPreferences agar tidak hilang saat restart
           final prefs = await SharedPreferences.getInstance();
-          await prefs.setString('userRole', 'Penanggung Jawab');
+          await prefs.setString('userRole', _role);
           await prefs.setBool('isLoggedIn', true);
           
-          print("Login sebagai Admin terdeteksi!");
+          print("Login berhasil via MongoDB! Role: $_role");
         } else {
-          // 👤 DIA ADALAH PELAPOR (MAHASISWA/DOSEN)
-          // Cek apakah dia sudah pernah mengisi profil (NIM/NIP)?
-          final userDoc = await _db.collection('users').doc(user.uid).get();
-
-          if (userDoc.exists) {
-            _role = userDoc.data()?['role'] ?? 'Mahasiswa';
-            _isLoggedIn = true;
-            
-            final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('userRole', _role!);
-            await prefs.setBool('isLoggedIn', true);
-          } else {
-            // User baru, role belum ditentukan (nanti di CompleteProfileScreen)
-            _isLoggedIn = false; 
-            _role = 'user';
-          }
+          // 👤 USER BELUM ADA DI MONGODB
+          // User baru, role belum ditentukan (nanti di CompleteProfileScreen)
+          _isLoggedIn = false; 
+          _role = 'user';
         }
       }
     } catch (e) {
@@ -118,25 +107,28 @@ class AuthProvider extends ChangeNotifier {
     try {
       final user = _auth.currentUser;
       if (user != null) {
-        // Simpan ke Firestore
-        await _db.collection('users').doc(user.uid).set({
-          'role': role, // Bisa 'Mahasiswa' atau 'Dosen'
-          'isStaff': false, // Keduanya bukan staf admin, jadi false
-          'id_kampus': identitas, // Ganti nama field jadi id_kampus agar fleksibel
-          'prodi': prodi,
-          'angkatan': angkatan,
+        // --- SIMPAN KE MONGODB ATLAS ---
+        final newUserDoc = {
           'email': user.email,
-          'displayName': user.displayName,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
+          'nama': user.displayName ?? 'Pengguna',
+          'nip': identitas, // Mengikuti penamaan di Database.md (NIP/NIM)
+          'prodi': prodi,
+          'role': 'User', // Sesuai Database.md, Mahasiswa/Dosen secara default adalah "User"
+          'isActive': true,
+          'lastLogin': DateTime.now(),
+          'createdAt': DateTime.now(),
+          'updatedAt': DateTime.now(),
+        };
 
-        // Simpan Sesi Lokal
+        await MongoService().createUser(newUserDoc);
+
+        // --- Simpan Sesi Lokal ---
         final prefs = await SharedPreferences.getInstance();
         await prefs.setBool('isLoggedIn', true);
-        await prefs.setString('userRole', role);
+        await prefs.setString('userRole', 'User');
 
         _isLoggedIn = true;
-        _role = role;
+        _role = 'User';
       }
     } finally {
       _isLoading = false;

@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart'; 
 import 'complete_profile_screen.dart';
 import 'dashboard_screen.dart';
-import 'admin/admin_dashboard_screen.dart';
+import 'admin/admin_shell_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -49,7 +49,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           if (ap.role == 'Penanggung Jawab') {
                             Navigator.pushReplacement(
                               context,
-                              MaterialPageRoute(builder: (context) => const AdminDashboardScreen()),
+                              MaterialPageRoute(builder: (context) => const AdminShellScreen()),
                             );
                           } else {
                             Navigator.pushReplacement(

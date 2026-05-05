@@ -64,9 +64,13 @@ class ReportHistoryScreen extends StatelessWidget {
     TiketModel report,
     FeedProvider feedProvider,
   ) {
-    final Color categoryColor = report.kategori == 'Sarana Prasarana'
+    final Color categoryColor = report.kategori.utama == 'Sarpras'
         ? const Color(0xFF3B696D)
         : const Color(0xFFE5A77A);
+        
+    final lokasiStr = report.deskripsiLokasi != null && report.deskripsiLokasi!.isNotEmpty 
+        ? report.deskripsiLokasi! 
+        : '${report.lokasi.gedung}, Lt ${report.lokasi.lantai}';
 
     return InkWell(
       onTap: () {
@@ -115,7 +119,7 @@ class ReportHistoryScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          report.judul,
+                          report.judulSingkat,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
@@ -125,7 +129,7 @@ class ReportHistoryScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          report.kategori,
+                          report.kategori.utama,
                           style: TextStyle(
                             color: Colors.grey.shade600,
                             fontSize: 12,
@@ -140,15 +144,15 @@ class ReportHistoryScreen extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: _getStatusColor(report.statusTiket).withOpacity(0.1),
+                      color: _getStatusColor(report.status).withOpacity(0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      report.statusTiket,
+                      report.status,
                       style: TextStyle(
                         fontSize: 10,
                         fontWeight: FontWeight.w600,
-                        color: _getStatusColor(report.statusTiket),
+                        color: _getStatusColor(report.status),
                       ),
                     ),
                   ),
@@ -166,7 +170,7 @@ class ReportHistoryScreen extends StatelessWidget {
                   const SizedBox(width: 4),
                   Expanded(
                     child: Text(
-                      report.lokasiDetail,
+                      lokasiStr,
                       style: TextStyle(
                         fontSize: 12,
                         color: Colors.grey.shade600,
@@ -188,7 +192,7 @@ class ReportHistoryScreen extends StatelessWidget {
               const SizedBox(height: 12),
               // Description
               Text(
-                report.deskripsi,
+                report.deskripsiTiket,
                 style: TextStyle(
                   fontSize: 13,
                   color: Colors.grey.shade700,
@@ -211,7 +215,7 @@ class ReportHistoryScreen extends StatelessWidget {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        '${report.jumlahUpvote}',
+                        '${report.jumlahVote}',
                         style: TextStyle(
                           fontSize: 12,
                           color: Colors.grey.shade600,
@@ -240,13 +244,13 @@ class ReportHistoryScreen extends StatelessWidget {
 
   Color _getStatusColor(String status) {
     switch (status) {
-      case 'SUBMITTED':
-        return const Color(0xFF3B696D);
-      case 'IN_PROGRESS':
+      case 'Menunggu Verifikasi':
         return const Color(0xFFF59E0B);
-      case 'RESOLVED':
+      case 'Approved':
         return const Color(0xFF10B981);
-      case 'CLOSED':
+      case 'Rejected':
+        return Colors.red;
+      case 'Documented':
         return const Color(0xFF6B7280);
       default:
         return Colors.grey;
