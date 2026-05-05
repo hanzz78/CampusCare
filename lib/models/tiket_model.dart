@@ -95,10 +95,8 @@ class TiketModel {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      '_id': id,
+    final map = <String, dynamic>{
       'idTiket': idTiket,
-      'idUser': idUser,
       'emailUser': emailUser,
       'judulSingkat': judulSingkat,
       'deskripsiTiket': deskripsiTiket,
@@ -108,20 +106,22 @@ class TiketModel {
       'buktiVisual': buktiVisual,
       'status': status,
       'tingkatUrgensi': tingkatUrgensi,
-      'tanggalPembuatan': tanggalPembuatan.toIso8601String(),
-      'tanggalPengajuan': tanggalPengajuan.toIso8601String(),
-      'tanggalVerifikasi': tanggalVerifikasi?.toIso8601String(),
-      'tanggalApproval': tanggalApproval?.toIso8601String(),
-      'tanggalRejection': tanggalRejection?.toIso8601String(),
-      'tanggalExport': tanggalExport?.toIso8601String(),
+      'tanggalPembuatan': tanggalPembuatan,
+      'tanggalPengajuan': tanggalPengajuan,
+      'tanggalVerifikasi': tanggalVerifikasi,
+      'tanggalApproval': tanggalApproval,
+      'tanggalRejection': tanggalRejection,
+      'tanggalExport': tanggalExport,
       'alasanRejection': alasanRejection,
       'catatanPJ': catatanPJ,
       'jumlahVote': jumlahVote,
       'comments': comments.map((e) => e.toJson()).toList(),
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt.toIso8601String(),
-      'deletedAt': deletedAt?.toIso8601String(),
+      'createdAt': createdAt,
+      'updatedAt': updatedAt,
+      'deletedAt': deletedAt,
     };
+    if (id != null) map['_id'] = id; // Jangan set id jika tidak ada
+    return map;
   }
 
   static DateTime _parseDate(dynamic date) {

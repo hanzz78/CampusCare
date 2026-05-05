@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/feed_provider.dart';
+import '../../models/tiket_model.dart';
 import '../login_screen.dart';
 import '../report_history_screen.dart';
 import '../edit_profile_screen.dart';
@@ -19,9 +21,9 @@ class ProfileTab extends StatelessWidget {
     final String name = authProvider.displayName ?? email.split('@')[0].toUpperCase();
     final String role = authProvider.role == 'Admin' ? 'Administrator' : 'Mahasiswa';
     
-    // Filter laporan milik user ini saja (sebagai contoh, filter by penggunaId)
+    // Filter laporan milik user ini saja (sebagai contoh, filter by emailUser)
     // Jika tidak ada ID yang cocok, list akan kosong.
-    final myReports = feedProvider.reports.where((r) => r.penggunaId == email).toList();
+    final myReports = feedProvider.reports.where((r) => r.emailUser == email).toList();
     
     return Container(
       color: const Color(0xFF3B696D), // Latar belakang Teal untuk Header

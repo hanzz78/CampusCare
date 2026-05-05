@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../providers/report_form_provider.dart';
+import '../providers/auth_provider.dart';
+import '../providers/feed_provider.dart';
 import 'camera_screen.dart';
 
 class ReportFormWizardScreen extends StatefulWidget {
@@ -16,6 +18,7 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
   final int _totalSteps = 4;
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -175,12 +178,32 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                         width: double.infinity,
                         height: 56,
                         child: ElevatedButton(
-                          onPressed: () {
+                          onPressed: _isSubmitting ? null : () async {
                             if (_currentStep == _totalSteps - 1) {
                               // Submit Report
-                              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Laporan Berhasil Diunggah!')));
-                              context.read<ReportFormProvider>().resetForm();
-                              Navigator.pop(context);
+                              setState(() { _isSubmitting = true; });
+                              try {
+                                final authProvider = context.read<AuthProvider>();
+                                final formProvider = context.read<ReportFormProvider>();
+                                
+                                final email = authProvider.email ?? 'mahasiswa@polban.ac.id';
+                                final userId = authProvider.email ?? 'u1'; // Simulasi UID
+                                
+                                await formProvider.submitReport(email, userId);
+                                
+                                // Segarkan Beranda
+                                context.read<FeedProvider>().fetchReports();
+
+                                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Laporan Berhasil Diunggah!')));
+                                formProvider.resetForm();
+                                Navigator.pop(context);
+                              } catch (e) {
+                                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal mengirim laporan: $e')));
+                              } finally {
+                                if (mounted) {
+                                  setState(() { _isSubmitting = false; });
+                                }
+                              }
                             } else {
                               _nextStep();
                             }
@@ -190,10 +213,12 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                             elevation: 0,
                           ),
-                          child: Text(
-                            _currentStep == _totalSteps - 1 ? 'Unggah Pelaporan' : 'Selanjutnya',
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-                          ),
+                          child: _isSubmitting 
+                            ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                            : Text(
+                                _currentStep == _totalSteps - 1 ? 'Unggah Pelaporan' : 'Selanjutnya',
+                                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                              ),
                         ),
                       ),
                     ),

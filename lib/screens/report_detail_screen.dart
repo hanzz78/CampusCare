@@ -168,9 +168,9 @@ class ReportDetailScreen extends StatelessWidget {
 
                   ...report.comments.map((comment) {
                     return _buildCommentItem(
-                      comment.penggunaId.substring(0, comment.penggunaId.length > 8 ? 8 : comment.penggunaId.length), // Samarkan ID
-                      comment.komentar,
-                      feedProvider.getTimeAgo(comment.waktu)
+                      comment.emailUser.split('@').first, // Samarkan ID dengan nama depan email
+                      comment.content,
+                      feedProvider.getTimeAgo(comment.tanggalKomentar)
                     );
                   }).toList(),
 
