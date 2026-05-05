@@ -21,9 +21,9 @@ class ProfileTab extends StatelessWidget {
     final String name = authProvider.displayName ?? email.split('@')[0].toUpperCase();
     final String role = authProvider.role == 'Admin' ? 'Administrator' : 'Mahasiswa';
     
-    // Filter laporan milik user ini saja (sebagai contoh, filter by emailUser)
-    // Jika tidak ada ID yang cocok, list akan kosong.
-    final myReports = feedProvider.reports.where((r) => r.emailUser == email).toList();
+    // Filter laporan milik user ini saja (sekarang menggunakan idUser asli dari MongoDB)
+    final userId = authProvider.userId ?? '';
+    final myReports = feedProvider.reports.where((r) => r.idUser == userId).toList();
     
     return Container(
       color: const Color(0xFF3B696D), // Latar belakang Teal untuk Header

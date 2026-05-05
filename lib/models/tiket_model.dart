@@ -1,3 +1,5 @@
+import 'package:mongo_dart/mongo_dart.dart' show ObjectId;
+
 class TiketModel {
   final String? id; // '_id' in MongoDB
   final String idTiket; // 'idTiket'
@@ -63,9 +65,9 @@ class TiketModel {
 
   factory TiketModel.fromJson(Map<String, dynamic> json) {
     return TiketModel(
-      id: json['_id']?.toString(), // Handle ObjectId
+      id: _parseObjectId(json['_id']),
       idTiket: json['idTiket'] as String? ?? 'UNKNOWN',
-      idUser: json['idUser']?.toString() ?? '',
+      idUser: _parseObjectId(json['idUser']) ?? '',
       emailUser: json['emailUser'] as String? ?? '',
       judulSingkat: json['judulSingkat'] as String? ?? 'Tanpa Judul',
       deskripsiTiket: json['deskripsiTiket'] as String? ?? '',
@@ -137,6 +139,17 @@ class TiketModel {
     if (date is String) return DateTime.tryParse(date);
     return null;
   }
+
+  static String? _parseObjectId(dynamic value) {
+    if (value == null) return null;
+    if (value is ObjectId) return value.toHexString();
+    // Jika value string yang berformat ObjectId("..."), kita ekstrak (fallback)
+    final str = value.toString();
+    if (str.startsWith('ObjectId("') && str.endsWith('")')) {
+      return str.substring(10, str.length - 2);
+    }
+    return str;
+  }
 }
 
 class KategoriModel {
@@ -192,8 +205,8 @@ class CommentModel {
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {
     return CommentModel(
-      id: json['_id']?.toString(),
-      idUser: json['idUser']?.toString() ?? '',
+      id: TiketModel._parseObjectId(json['_id']),
+      idUser: TiketModel._parseObjectId(json['idUser']) ?? '',
       emailUser: json['emailUser'] as String? ?? '',
       content: json['content'] as String? ?? '',
       tanggalKomentar: TiketModel._parseDate(json['tanggalKomentar']),

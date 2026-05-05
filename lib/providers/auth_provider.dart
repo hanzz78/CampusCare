@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:mongo_dart/mongo_dart.dart' show ObjectId;
 import '../services/mongo_service.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -14,11 +15,13 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   bool _isLoggedIn = false;
   String _role = 'user'; // Default role
+  String? _userId;
 
   // Getters supaya bisa dibaca oleh UI
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _isLoggedIn;
   String get role => _role;
+  String? get userId => _userId;
   String? get email => _auth.currentUser?.email;
   String? get displayName => _auth.currentUser?.displayName;
 
@@ -28,10 +31,12 @@ class AuthProvider extends ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
       _role = prefs.getString('userRole') ?? 'user';
+      _userId = prefs.getString('userId');
     } catch (e) {
       debugPrint('checkSession error: $e');
       _isLoggedIn = false;
       _role = 'user';
+      _userId = null;
     }
     notifyListeners();
   }
@@ -69,20 +74,45 @@ class AuthProvider extends ChangeNotifier {
 
         if (userDoc != null) {
           // 🎉 USER DITEMUKAN DI MONGODB
+          _userId = (userDoc['_id'] as ObjectId).toHexString();
           _role = userDoc['role'] ?? 'User';
           _isLoggedIn = true;
           
           // Simpan status di SharedPreferences agar tidak hilang saat restart
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('userRole', _role);
+          await prefs.setString('userId', _userId!);
           await prefs.setBool('isLoggedIn', true);
           
           print("Login berhasil via MongoDB! Role: $_role");
         } else {
-          // 👤 USER BELUM ADA DI MONGODB
-          // User baru, role belum ditentukan (nanti di CompleteProfileScreen)
-          _isLoggedIn = false; 
-          _role = 'user';
+          // 👤 USER BELUM ADA DI MONGODB -> OTOMATIS DAFTAR
+          final newObjectId = ObjectId();
+          final newUserDoc = {
+            '_id': newObjectId,
+            'email': user.email,
+            'nama': user.displayName ?? 'Pengguna',
+            'nip': null, // NIP/NIM dikosongkan untuk pendaftaran instan
+            'prodi': 'Tidak Diketahui',
+            'role': 'User', // Role bawaan
+            'isActive': true,
+            'lastLogin': DateTime.now(),
+            'createdAt': DateTime.now(),
+            'updatedAt': DateTime.now(),
+          };
+
+          await MongoService().createUser(newUserDoc);
+
+          _userId = newObjectId.toHexString();
+          _isLoggedIn = true; 
+          _role = 'User';
+
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('userRole', _role);
+          await prefs.setString('userId', _userId!);
+          await prefs.setBool('isLoggedIn', true);
+
+          print("Pendaftaran otomatis berhasil via MongoDB! Role: $_role");
         }
       }
     } catch (e) {
@@ -150,6 +180,7 @@ class AuthProvider extends ChangeNotifier {
     
     _isLoggedIn = false;
     _role = 'user';
+    _userId = null;
     notifyListeners();
   }
 }

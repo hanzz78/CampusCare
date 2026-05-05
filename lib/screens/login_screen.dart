@@ -57,12 +57,6 @@ class _LoginScreenState extends State<LoginScreen> {
                               MaterialPageRoute(builder: (context) => DashboardScreen(role: ap.role)),
                             );
                           }
-                        } else {
-                          // Jika Pelapor baru (NIM/NIP belum ada) -> Ke Complete Profile
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => const CompleteProfileScreen()),
-                          );
                         }
                       }
                     } catch (e) {

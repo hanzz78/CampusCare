@@ -187,7 +187,7 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                                 final formProvider = context.read<ReportFormProvider>();
                                 
                                 final email = authProvider.email ?? 'mahasiswa@polban.ac.id';
-                                final userId = authProvider.email ?? 'u1'; // Simulasi UID
+                                final userId = authProvider.userId ?? '6672a1b4f3c3c3c3c3c3c3c1'; // Fallback aman
                                 
                                 await formProvider.submitReport(email, userId);
                                 

@@ -1,20 +1,43 @@
 import 'package:flutter/material.dart';
 import '../models/tiket_model.dart';
 import '../providers/feed_provider.dart';
+import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 
-class ReportDetailScreen extends StatelessWidget {
+class ReportDetailScreen extends StatefulWidget {
   final TiketModel report;
 
   const ReportDetailScreen({super.key, required this.report});
 
   @override
+  State<ReportDetailScreen> createState() => _ReportDetailScreenState();
+}
+
+class _ReportDetailScreenState extends State<ReportDetailScreen> {
+  final TextEditingController _commentController = TextEditingController();
+  bool _isSubmittingComment = false;
+
+  @override
+  void dispose() {
+    _commentController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final feedProvider = context.read<FeedProvider>();
-    final isSarpras = report.kategori.utama == 'Sarpras';
-    final lokasiStr = report.deskripsiLokasi != null && report.deskripsiLokasi!.isNotEmpty 
-        ? report.deskripsiLokasi! 
-        : '${report.lokasi.gedung}, Lt ${report.lokasi.lantai}';
+    final feedProvider = context.watch<FeedProvider>();
+    final authProvider = context.read<AuthProvider>();
+
+    // Ambil laporan terbaru dari provider agar realtime (votes & comments terupdate)
+    final updatedReport = feedProvider.reports.firstWhere(
+      (r) => r.idTiket == widget.report.idTiket,
+      orElse: () => widget.report,
+    );
+
+    final isSarpras = updatedReport.kategori.utama == 'Sarpras';
+    final lokasiStr = updatedReport.deskripsiLokasi != null && updatedReport.deskripsiLokasi!.isNotEmpty 
+        ? updatedReport.deskripsiLokasi! 
+        : '${updatedReport.lokasi.gedung}, Lt ${updatedReport.lokasi.lantai}';
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FA),
@@ -68,12 +91,12 @@ class ReportDetailScreen extends StatelessWidget {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          report.kategori.utama,
+                          updatedReport.kategori.utama,
                           style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
                         ),
                       ),
                       Text(
-                        feedProvider.getTimeAgo(report.createdAt),
+                        feedProvider.getTimeAgo(updatedReport.createdAt),
                         style: const TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                     ],
@@ -82,7 +105,7 @@ class ReportDetailScreen extends StatelessWidget {
                   
                   // Title
                   Text(
-                    report.judulSingkat,
+                    updatedReport.judulSingkat,
                     style: const TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -114,7 +137,7 @@ class ReportDetailScreen extends StatelessWidget {
                   const Text('Deskripsi Laporan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
                   const SizedBox(height: 12),
                   Text(
-                    report.deskripsiTiket,
+                    updatedReport.deskripsiTiket,
                     style: const TextStyle(
                       fontSize: 14,
                       color: Colors.black87,
@@ -128,9 +151,25 @@ class ReportDetailScreen extends StatelessWidget {
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
-                      onPressed: () {
-                        // TODO: Implement Upvote Logic
-                        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dukungan ditambahkan!')));
+                      onPressed: () async {
+                        final userId = authProvider.userId;
+                        final email = authProvider.email;
+
+                        if (userId == null || email == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anda harus login untuk memberikan dukungan!')));
+                          return;
+                        }
+
+                        try {
+                          await feedProvider.upvote(updatedReport.idTiket, userId, email);
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dukungan berhasil ditambahkan!')));
+                          }
+                        } catch (e) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+                          }
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red.shade50,
@@ -143,7 +182,7 @@ class ReportDetailScreen extends StatelessWidget {
                         elevation: 0,
                       ),
                       icon: const Icon(Icons.local_fire_department),
-                      label: Text('Berikan Dukungan (${report.jumlahVote})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      label: Text('Berikan Dukungan (${updatedReport.jumlahVote})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
                   ),
                   
@@ -152,10 +191,10 @@ class ReportDetailScreen extends StatelessWidget {
                   const SizedBox(height: 24),
 
                   // Daftar Komentar
-                  Text('Komentar (${report.comments.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
+                  Text('Komentar (${updatedReport.comments.length})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
                   const SizedBox(height: 16),
                   
-                  if (report.comments.isEmpty)
+                  if (updatedReport.comments.isEmpty)
                     const Padding(
                       padding: EdgeInsets.symmetric(vertical: 24),
                       child: Center(
@@ -166,7 +205,7 @@ class ReportDetailScreen extends StatelessWidget {
                       ),
                     ),
 
-                  ...report.comments.map((comment) {
+                  ...updatedReport.comments.map((comment) {
                     return _buildCommentItem(
                       comment.emailUser.split('@').first, // Samarkan ID dengan nama depan email
                       comment.content,
@@ -207,6 +246,7 @@ class ReportDetailScreen extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: TextField(
+                controller: _commentController,
                 decoration: InputDecoration(
                   hintText: 'Tambahkan komentar...',
                   hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
@@ -222,17 +262,47 @@ class ReportDetailScreen extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             InkWell(
-              onTap: () {
-                // TODO: Aksi kirim komentar
+              onTap: _isSubmittingComment ? null : () async {
+                final content = _commentController.text.trim();
+                final userId = authProvider.userId;
+                final email = authProvider.email;
+
+                if (content.isEmpty) return;
+                if (content.length < 5) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Komentar minimal 5 karakter!')));
+                  return;
+                }
+                if (userId == null || email == null) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anda harus login!')));
+                  return;
+                }
+
+                setState(() => _isSubmittingComment = true);
+
+                try {
+                  await feedProvider.addComment(updatedReport.idTiket, content, userId, email);
+                  _commentController.clear();
+                  if (context.mounted) {
+                    FocusScope.of(context).unfocus(); // Tutup keyboard
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: ${e.toString().replaceAll("Exception: ", "")}')));
+                  }
+                } finally {
+                  if (mounted) setState(() => _isSubmittingComment = false);
+                }
               },
               borderRadius: BorderRadius.circular(24),
               child: Container(
                 padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: Color(0xFF3B696D),
+                decoration: BoxDecoration(
+                  color: _isSubmittingComment ? Colors.grey : const Color(0xFF3B696D),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.send, color: Colors.white, size: 18),
+                child: _isSubmittingComment 
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                    : const Icon(Icons.send, color: Colors.white, size: 18),
               ),
             ),
           ],

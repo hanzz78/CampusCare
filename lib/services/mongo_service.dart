@@ -12,7 +12,18 @@ class MongoService {
 
   Future<void> connect() async {
     if (_db != null && _db!.state == State.OPEN) {
-      return; // Sudah terkoneksi
+      try {
+        // Ping database untuk memastikan koneksi socket benar-benar masih hidup
+        await _db!.serverStatus();
+        return; // Sudah terkoneksi dan sehat
+      } catch (e) {
+        if (kDebugMode) {
+          print("Koneksi MongoDB terputus (idle). Mencoba menyambung ulang...");
+        }
+        // Force cleanup
+        try { await _db!.close(); } catch (_) {}
+        _db = null;
+      }
     }
 
     try {
@@ -47,9 +58,10 @@ class MongoService {
     return _db!.collection(collectionName);
   }
 
-  // Fungsi khusus untuk mengecek user (Membaca file Database.md)
+  // Fungsi khusus untuk mengecek user
   Future<Map<String, dynamic>?> findUserByEmail(String email) async {
     try {
+      await connect();
       final usersCollection = getCollection('users');
       final user = await usersCollection.findOne(where.eq('email', email));
       return user;
@@ -61,9 +73,10 @@ class MongoService {
     }
   }
 
-  // Fungsi untuk mendaftarkan user baru (Saat Complete Profile)
+  // Fungsi untuk mendaftarkan user baru
   Future<void> createUser(Map<String, dynamic> userData) async {
     try {
+      await connect();
       final usersCollection = getCollection('users');
       await usersCollection.insert(userData);
       if (kDebugMode) {

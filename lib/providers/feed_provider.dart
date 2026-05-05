@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mongo_dart/mongo_dart.dart' show ObjectId, modify, where;
 import '../models/tiket_model.dart';
 import '../services/mongo_service.dart';
 
@@ -18,6 +19,7 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
+      await MongoService().connect();
       final collection = MongoService().getCollection('tickets');
       final data = await collection.find().toList();
       _reports = data.map((json) => TiketModel.fromJson(json)).toList();
@@ -27,6 +29,80 @@ class FeedProvider extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  Future<void> upvote(String idTiket, String userId, String emailUser) async {
+    try {
+      await MongoService().connect();
+      final votesCol = MongoService().getCollection('votes');
+      final ticketsCol = MongoService().getCollection('tickets');
+
+      // Cek apakah user sudah pernah vote tiket ini
+      final existingVote = await votesCol.findOne({
+        'idTiket': idTiket,
+        'idUser': ObjectId.fromHexString(userId)
+      });
+
+      if (existingVote != null) {
+        throw Exception('Anda sudah memberikan dukungan pada laporan ini.');
+      }
+
+      // Tambahkan ke koleksi votes
+      await votesCol.insert({
+        'idTiket': idTiket,
+        'idUser': ObjectId.fromHexString(userId),
+        'emailUser': emailUser,
+        'createdAt': DateTime.now()
+      });
+
+      // Tambahkan jumlahVote di koleksi tickets
+      final updateResult = await ticketsCol.updateOne(
+        where.eq('idTiket', idTiket),
+        modify.inc('jumlahVote', 1)
+      );
+
+      if (updateResult.hasWriteErrors) {
+        throw Exception(updateResult.writeError?.errmsg ?? 'Gagal menyimpan vote');
+      }
+
+      // Refresh data lokal
+      await fetchReports();
+    } catch (e) {
+      debugPrint("Error upvote: $e");
+      rethrow;
+    }
+  }
+
+  Future<void> addComment(String idTiket, String content, String userId, String emailUser) async {
+    try {
+      await MongoService().connect();
+      final ticketsCol = MongoService().getCollection('tickets');
+
+      final newComment = {
+        '_id': ObjectId(),
+        'idUser': ObjectId.fromHexString(userId),
+        'emailUser': emailUser,
+        'content': content,
+        'tanggalKomentar': DateTime.now(),
+        'isDeleted': false,
+      };
+
+      // Push komentar ke array comments di dalam dokumen tiket
+      final result = await ticketsCol.updateOne(
+        where.eq('idTiket', idTiket),
+        modify.push('comments', newComment)
+      );
+
+      if (result.hasWriteErrors) {
+        throw Exception(result.writeError?.errmsg ?? 'Gagal menyimpan ke database (Validation Error)');
+      }
+
+      // Refresh data lokal
+      await fetchReports();
+    } catch (e) {
+      debugPrint("Error addComment: $e");
+      rethrow;
+    }
   }
 
   String getTimeAgo(DateTime createdAt) {

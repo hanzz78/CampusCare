@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/auth_provider.dart';
 import '../providers/feed_provider.dart';
 import '../models/tiket_model.dart';
 import 'report_detail_screen.dart';
@@ -10,6 +11,10 @@ class ReportHistoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final feedProvider = context.watch<FeedProvider>();
+    final authProvider = context.watch<AuthProvider>();
+    
+    final userId = authProvider.userId ?? '';
+    final myReports = feedProvider.reports.where((r) => r.idUser == userId).toList();
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F3EC),
@@ -26,7 +31,7 @@ class ReportHistoryScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: feedProvider.reports.isEmpty
+      body: myReports.isEmpty
           ? Center(
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -50,9 +55,9 @@ class ReportHistoryScreen extends StatelessWidget {
             )
           : ListView.builder(
               padding: const EdgeInsets.all(16),
-              itemCount: feedProvider.reports.length,
+              itemCount: myReports.length,
               itemBuilder: (context, index) {
-                final report = feedProvider.reports[index];
+                final report = myReports[index];
                 return _buildReportCard(context, report, feedProvider);
               },
             ),

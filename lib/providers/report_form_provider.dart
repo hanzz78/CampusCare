@@ -114,6 +114,7 @@ class ReportFormProvider extends ChangeNotifier {
     };
 
     // Kirim ke MongoDB
+    await MongoService().connect();
     final collection = MongoService().getCollection('tickets');
     await collection.insert(tiketMap);
   }
