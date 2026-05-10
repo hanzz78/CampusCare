@@ -159,9 +159,11 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                         }
 
                         try {
-                          await feedProvider.upvote(updatedReport.idTiket, userId, email);
+                          final isUpvoted = await feedProvider.upvote(updatedReport.idTiket, userId, email);
                           if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Dukungan berhasil ditambahkan!')));
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                              content: Text(isUpvoted ? 'Dukungan berhasil ditambahkan!' : 'Dukungan berhasil dibatalkan (Unvote)'),
+                            ));
                           }
                         } catch (e) {
                           if (context.mounted) {

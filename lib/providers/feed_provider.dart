@@ -31,7 +31,8 @@ class FeedProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> upvote(String idTiket, String userId, String emailUser) async {
+  // Mengembalikan true jika upvote ditambahkan, false jika di-unvote
+  Future<bool> upvote(String idTiket, String userId, String emailUser) async {
     try {
       await MongoService().connect();
       final votesCol = MongoService().getCollection('votes');
@@ -44,9 +45,26 @@ class FeedProvider extends ChangeNotifier {
       });
 
       if (existingVote != null) {
-        throw Exception('Anda sudah memberikan dukungan pada laporan ini.');
+        // UNVOTE LOGIC
+        // Hapus dari koleksi votes
+        await votesCol.deleteOne({'_id': existingVote['_id']});
+
+        // Kurangi jumlahVote di koleksi tickets
+        final updateResult = await ticketsCol.updateOne(
+          where.eq('idTiket', idTiket),
+          modify.inc('jumlahVote', -1)
+        );
+
+        if (updateResult.hasWriteErrors) {
+          throw Exception(updateResult.writeError?.errmsg ?? 'Gagal menghapus vote');
+        }
+
+        // Refresh data lokal
+        await fetchReports();
+        return false; // false = di-unvote
       }
 
+      // UPVOTE LOGIC
       // Tambahkan ke koleksi votes
       await votesCol.insert({
         'idTiket': idTiket,
@@ -67,6 +85,7 @@ class FeedProvider extends ChangeNotifier {
 
       // Refresh data lokal
       await fetchReports();
+      return true; // true = di-upvote
     } catch (e) {
       debugPrint("Error upvote: $e");
       rethrow;
