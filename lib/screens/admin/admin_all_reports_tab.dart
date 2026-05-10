@@ -104,10 +104,21 @@ class AdminAllReportsTab extends StatelessWidget {
                               Row(
                                 children: [
                                   Container(
-                                    width: 48,
-                                    height: 48,
-                                    decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(12)),
-                                    child: Icon(isSarpras ? Icons.build : Icons.cleaning_services, color: color),
+                                    width: 56,
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                      color: color.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(12),
+                                      image: tiket.buktiVisual.isNotEmpty && tiket.buktiVisual.first != 'placeholder.jpg'
+                                          ? DecorationImage(
+                                              image: NetworkImage(tiket.buktiVisual.first),
+                                              fit: BoxFit.cover,
+                                            )
+                                          : null,
+                                    ),
+                                    child: (tiket.buktiVisual.isEmpty || tiket.buktiVisual.first == 'placeholder.jpg')
+                                        ? Icon(isSarpras ? Icons.build : Icons.cleaning_services, color: color)
+                                        : null,
                                   ),
                                   const SizedBox(width: 16),
                                   Expanded(

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/tiket_model.dart';
 import 'package:provider/provider.dart';
 import '../../providers/admin_dashboard_provider.dart';
+import 'package:mongo_dart/mongo_dart.dart' show ObjectId;
 
 class AdminReportReviewScreen extends StatefulWidget {
   final TiketModel report;
@@ -13,7 +14,7 @@ class AdminReportReviewScreen extends StatefulWidget {
 }
 
 class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
-  String _urgencyLevel = 'Low';
+  String _urgencyLevel = 'Prioritas Rendah';
 
   @override
   Widget build(BuildContext context) {
@@ -77,24 +78,44 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
             ),
             const SizedBox(height: 24),
             
-            // Image Placeholder
-            Container(
-              height: 200,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.image_outlined, size: 50, color: Colors.grey),
-                    SizedBox(height: 8),
-                    Text('Foto Bukti: ${widget.report.buktiVisual.length} dilampirkan', style: TextStyle(color: Colors.grey)),
-                  ],
-                ),
-              ),
+            // Gambar Bukti (Supabase)
+            ClipRRect(
+              borderRadius: BorderRadius.circular(16),
+              child: widget.report.buktiVisual.isNotEmpty && widget.report.buktiVisual.first != 'placeholder.jpg'
+                  ? Image.network(
+                      widget.report.buktiVisual.first,
+                      height: 250,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return Container(
+                          height: 250,
+                          color: Colors.grey.shade200,
+                          child: const Center(child: CircularProgressIndicator(color: Color(0xFF3B696D))),
+                        );
+                      },
+                      errorBuilder: (context, error, stackTrace) => Container(
+                        height: 250,
+                        color: Colors.grey.shade200,
+                        child: const Center(child: Icon(Icons.broken_image, size: 50, color: Colors.grey)),
+                      ),
+                    )
+                  : Container(
+                      height: 200,
+                      width: double.infinity,
+                      color: Colors.grey.shade300,
+                      child: const Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.image_outlined, size: 50, color: Colors.grey),
+                            SizedBox(height: 8),
+                            Text('Tidak ada foto bukti', style: TextStyle(color: Colors.grey)),
+                          ],
+                        ),
+                      ),
+                    ),
             ),
             const SizedBox(height: 24),
 
@@ -115,42 +136,14 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
             ),
             const SizedBox(height: 32),
 
-            // Urgency Setup
+            // Urgency Setup (Custom Design)
             const Text('Tentukan Tingkat Urgensi', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
+            const SizedBox(height: 16),
+            _buildPriorityButton('Prioritas Tinggi', Colors.red, Icons.whatshot),
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.grey.shade200),
-              ),
-              child: Column(
-                children: [
-                  RadioListTile<String>(
-                    title: const Text('High (Tinggi) 🔥', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
-                    value: 'High',
-                    groupValue: _urgencyLevel,
-                    onChanged: (val) => setState(() => _urgencyLevel = val!),
-                    activeColor: Colors.red,
-                  ),
-                  RadioListTile<String>(
-                    title: const Text('Medium (Sedang) ⚠️', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold)),
-                    value: 'Medium',
-                    groupValue: _urgencyLevel,
-                    onChanged: (val) => setState(() => _urgencyLevel = val!),
-                    activeColor: Colors.orange,
-                  ),
-                  RadioListTile<String>(
-                    title: const Text('Low (Rendah) 🍃', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold)),
-                    value: 'Low',
-                    groupValue: _urgencyLevel,
-                    onChanged: (val) => setState(() => _urgencyLevel = val!),
-                    activeColor: Colors.green,
-                  ),
-                ],
-              ),
-            ),
+            _buildPriorityButton('Prioritas Sedang', Colors.orange, Icons.warning_amber_rounded),
+            const SizedBox(height: 12),
+            _buildPriorityButton('Prioritas Rendah', Colors.green, Icons.low_priority),
             
             const SizedBox(height: 40),
             
@@ -192,6 +185,30 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
     );
   }
 
+  Widget _buildPriorityButton(String label, Color color, IconData icon) {
+    bool isSelected = _urgencyLevel == label;
+    return InkWell(
+      onTap: () => setState(() => _urgencyLevel = label),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withOpacity(0.1) : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: isSelected ? color : Colors.grey.shade300, width: 2),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? color : Colors.grey),
+            const SizedBox(width: 12),
+            Text(label, style: TextStyle(color: isSelected ? color : Colors.grey.shade700, fontWeight: FontWeight.bold, fontSize: 16)),
+            const Spacer(),
+            if (isSelected) Icon(Icons.check_circle, color: color),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showRejectDialog(BuildContext context) {
     final TextEditingController reasonController = TextEditingController();
 
@@ -222,15 +239,25 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
               child: const Text('Batal', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
-              onPressed: () {
+              onPressed: () async {
                 if (reasonController.text.trim().isEmpty) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Alasan penolakan tidak boleh kosong!')));
                   return;
                 }
-                // TODO: Eksekusi API Tolak
-                Navigator.pop(context); // Tutup dialog
-                Navigator.pop(context); // Tutup layar detail
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Laporan berhasil ditolak.')));
+                
+                try {
+                  await context.read<AdminDashboardProvider>().processTicket(
+                    ObjectId.fromHexString(widget.report.id!),
+                    'Reject',
+                    rejectReason: reasonController.text,
+                  );
+                  if (!context.mounted) return;
+                  Navigator.pop(context); // Tutup dialog
+                  Navigator.pop(context); // Tutup layar detail
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Laporan berhasil ditolak.')));
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal menolak laporan: $e')));
+                }
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
               child: const Text('Tolak Laporan', style: TextStyle(color: Colors.white)),
@@ -271,9 +298,20 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
               child: const Text('Batal', style: TextStyle(color: Colors.grey)),
             ),
             ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // Tutup dialog approve
-                _showSuccessDownloadDialog(context); // Buka dialog sukses
+              onPressed: () async {
+                try {
+                  await context.read<AdminDashboardProvider>().processTicket(
+                    ObjectId.fromHexString(widget.report.id!),
+                    'Approve',
+                    urgency: _urgencyLevel,
+                    pjNote: noteController.text,
+                  );
+                  if (!context.mounted) return;
+                  Navigator.pop(context); // Tutup dialog approve
+                  _showSuccessDownloadDialog(context); // Buka dialog sukses
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal menyetujui laporan: $e')));
+                }
               },
               style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
               child: const Text('Proses & Setujui', style: TextStyle(color: Colors.white)),
@@ -304,7 +342,6 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () {
-                    // TODO: Implement Download PDF
                     Navigator.pop(context); // Tutup dialog
                     Navigator.pop(context); // Kembali ke list
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Mendownload Dokumen...')));

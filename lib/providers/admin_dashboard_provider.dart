@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/tiket_model.dart';
 import '../services/mongo_service.dart';
+import 'package:mongo_dart/mongo_dart.dart' show ObjectId, where;
 
 class AdminDashboardProvider extends ChangeNotifier {
   bool _isLoading = false;
@@ -37,7 +38,6 @@ class AdminDashboardProvider extends ChangeNotifier {
   
   // 2. Daftar Laporan Masuk
   List<TiketModel> get laporanMasuk {
-    // Menampilkan hanya yang butuh review/tindakan
     return _reports.where((t) => t.status == 'Menunggu Verifikasi').toList();
   }
 
@@ -45,18 +45,25 @@ class AdminDashboardProvider extends ChangeNotifier {
   List<TiketModel> get filteredAndSortedReports {
     List<TiketModel> result = List.from(_reports);
 
-    // Apply Filter
     if (_selectedCategoryFilter != 'Semua') {
       result = result.where((t) => t.kategori.utama == _selectedCategoryFilter).toList();
     }
 
-    // Apply Sort
     if (_selectedSort == 'Waktu Terbaru') {
-      result.sort((a, b) => b.createdAt.compareTo(a.createdAt)); // Descending
+      result.sort((a, b) => b.createdAt.compareTo(a.createdAt));
     } else if (_selectedSort == 'Waktu Terlama') {
-      result.sort((a, b) => a.createdAt.compareTo(b.createdAt)); // Ascending
+      result.sort((a, b) => a.createdAt.compareTo(b.createdAt));
     } else if (_selectedSort == 'Urgensi Tertinggi') {
-      result.sort((a, b) => b.jumlahVote.compareTo(a.jumlahVote)); // High to Low based on vote
+      result.sort((a, b) {
+        // Prioritas manual lebih tinggi dari vote
+        int getPriorityValue(TiketModel t) {
+          if (t.tingkatUrgensi == 'Prioritas Tinggi') return 1000;
+          if (t.tingkatUrgensi == 'Prioritas Sedang') return 500;
+          if (t.tingkatUrgensi == 'Prioritas Rendah') return 100;
+          return t.jumlahVote;
+        }
+        return getPriorityValue(b).compareTo(getPriorityValue(a));
+      });
     }
 
     return result;
@@ -66,20 +73,13 @@ class AdminDashboardProvider extends ChangeNotifier {
   int get sarprasCount => _reports.where((t) => t.kategori.utama == 'Sarpras').length;
   int get kebersihanCount => _reports.where((t) => t.kategori.utama == 'Kebersihan').length;
 
-  double get sarprasPercentage {
-    if (_reports.isEmpty) return 0;
-    return (sarprasCount / _reports.length) * 100;
-  }
-  
-  double get kebersihanPercentage {
-    if (_reports.isEmpty) return 0;
-    return (kebersihanCount / _reports.length) * 100;
-  }
+  double get sarprasPercentage => _reports.isEmpty ? 0 : (sarprasCount / _reports.length) * 100;
+  double get kebersihanPercentage => _reports.isEmpty ? 0 : (kebersihanCount / _reports.length) * 100;
 
-  // 4. Urgensi (Berdasarkan Vote)
-  int get urgensiHigh => _reports.where((t) => t.jumlahVote >= 15).length;
-  int get urgensiMedium => _reports.where((t) => t.jumlahVote >= 5 && t.jumlahVote < 15).length;
-  int get urgensiLow => _reports.where((t) => t.jumlahVote < 5).length;
+  // 4. Urgensi (Berdasarkan Nilai Admin atau Vote)
+  int get urgensiHigh => _reports.where((t) => t.tingkatUrgensi == 'Prioritas Tinggi' || (t.tingkatUrgensi == null && t.jumlahVote >= 15)).length;
+  int get urgensiMedium => _reports.where((t) => t.tingkatUrgensi == 'Prioritas Sedang' || (t.tingkatUrgensi == null && t.jumlahVote >= 5 && t.jumlahVote < 15)).length;
+  int get urgensiLow => _reports.where((t) => t.tingkatUrgensi == 'Prioritas Rendah' || (t.tingkatUrgensi == null && t.jumlahVote < 5)).length;
 
   Future<void> fetchDashboardStats() async {
     _isLoading = true;
@@ -97,5 +97,56 @@ class AdminDashboardProvider extends ChangeNotifier {
 
     _isLoading = false;
     notifyListeners();
+  }
+
+  // 5. Fungsi untuk Memproses Tiket (Approve/Reject)
+  Future<void> processTicket(
+      ObjectId ticketId, String action,
+      {String? urgency, String? rejectReason, String? pjNote}) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final collection = MongoService().getCollection('tickets');
+      final now = DateTime.now();
+      
+      final setMap = <String, dynamic>{
+        'updatedAt': now.toIso8601String(),
+      };
+      
+      final modifier = <String, dynamic>{
+        '\$set': setMap,
+      };
+
+      if (action == 'Approve') {
+        setMap['status'] = 'Approved';
+        setMap['tingkatUrgensi'] = urgency; // "Prioritas Tinggi", etc.
+        setMap['tanggalVerifikasi'] = now.toIso8601String();
+        setMap['tanggalApproval'] = now.toIso8601String();
+        if (pjNote != null && pjNote.trim().isNotEmpty) {
+          setMap['catatanPJ'] = pjNote.trim();
+        }
+      } else if (action == 'Reject') {
+        setMap['status'] = 'Rejected';
+        setMap['tanggalRejection'] = now.toIso8601String();
+        if (rejectReason != null && rejectReason.trim().isNotEmpty) {
+          setMap['alasanRejection'] = rejectReason.trim();
+        }
+      }
+
+      await collection.updateOne(
+        where.id(ticketId),
+        modifier,
+      );
+
+      // Refresh list
+      await fetchDashboardStats();
+    } catch (e) {
+      debugPrint("❌ Error processTicket: $e");
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      rethrow;
+    }
   }
 }
