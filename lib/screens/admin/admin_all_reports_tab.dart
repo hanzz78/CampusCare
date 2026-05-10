@@ -146,17 +146,34 @@ class AdminAllReportsTab extends StatelessWidget {
                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                 children: [
                                   // Status / Urgency Badge
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                                    decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.orange.shade200)),
-                                    child: Row(
-                                      children: [
-                                        const Icon(Icons.local_fire_department, size: 16, color: Colors.orange),
-                                        const SizedBox(width: 4),
-                                        Text('${tiket.jumlahVote} Dukungan', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange, fontSize: 12)),
-                                      ],
+                                  if (tiket.status == 'Menunggu Verifikasi')
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.orange.shade200)),
+                                      child: Row(
+                                        children: [
+                                          const Icon(Icons.local_fire_department, size: 16, color: Colors.orange),
+                                          const SizedBox(width: 4),
+                                          Text('${tiket.jumlahVote} Dukungan', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange, fontSize: 12)),
+                                        ],
+                                      ),
+                                    )
+                                  else
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                      decoration: BoxDecoration(
+                                        color: tiket.status == 'Approved' ? Colors.green.shade50 : Colors.red.shade50,
+                                        borderRadius: BorderRadius.circular(20),
+                                        border: Border.all(color: tiket.status == 'Approved' ? Colors.green.shade200 : Colors.red.shade200),
+                                      ),
+                                      child: Row(
+                                        children: [
+                                          Icon(tiket.status == 'Approved' ? Icons.check_circle : Icons.cancel, size: 16, color: tiket.status == 'Approved' ? Colors.green : Colors.red),
+                                          const SizedBox(width: 4),
+                                          Text(tiket.status.toUpperCase(), style: TextStyle(fontWeight: FontWeight.bold, color: tiket.status == 'Approved' ? Colors.green : Colors.red, fontSize: 12)),
+                                        ],
+                                      ),
                                     ),
-                                  ),
                                   // Waktu
                                   Text(
                                     _formatDate(tiket.createdAt),
