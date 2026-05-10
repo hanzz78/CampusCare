@@ -42,12 +42,19 @@ class _HomeTabState extends State<HomeTab> {
                 ),
                 const SizedBox(height: 16),
                 Expanded(
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(top: 0, bottom: 80),
-                    itemCount: reports.length,
-                    itemBuilder: (context, index) {
-                      return ReportCard(report: reports[index]);
+                  child: RefreshIndicator(
+                    color: const Color(0xFF2A5256),
+                    onRefresh: () async {
+                      await context.read<FeedProvider>().fetchReports();
                     },
+                    child: ListView.builder(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      padding: const EdgeInsets.only(top: 0, bottom: 80),
+                      itemCount: reports.length,
+                      itemBuilder: (context, index) {
+                        return ReportCard(report: reports[index]);
+                      },
+                    ),
                   ),
                 ),
               ],
