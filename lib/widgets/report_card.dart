@@ -47,16 +47,32 @@ class ReportCard extends StatelessWidget {
               // Image and Badge
               Stack(
                 children: [
-                  // Dummy Image Placeholder
-                  Container(
-                    height: 150,
-                    width: double.infinity,
-                    decoration: const BoxDecoration(
-                      color: Colors.grey,
-                      borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-                    ),
-                    child: Center(
-                      child: Icon(Icons.image, color: Colors.white54, size: 50),
+                  // Image
+                  ClipRRect(
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                    child: SizedBox(
+                      height: 150,
+                      width: double.infinity,
+                      child: report.buktiVisual.isNotEmpty && report.buktiVisual.first != 'placeholder.jpg'
+                        ? Image.network(
+                            report.buktiVisual.first,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                color: Colors.grey[300],
+                                child: const Center(child: CircularProgressIndicator(color: Color(0xFF2A5256))),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) => Container(
+                              color: Colors.grey[300],
+                              child: const Center(child: Icon(Icons.broken_image, size: 50, color: Colors.white54)),
+                            ),
+                          )
+                        : Container(
+                            color: Colors.grey[300],
+                            child: const Center(child: Icon(Icons.image, color: Colors.white54, size: 50)),
+                          ),
                     ),
                   ),
                   // Category Badge

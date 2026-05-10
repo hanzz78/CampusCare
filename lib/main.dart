@@ -13,6 +13,7 @@ import 'screens/admin/admin_shell_screen.dart';
 
 import 'package:flutter/foundation.dart'; // import kDebugMode
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // import dotenv
+import 'package:supabase_flutter/supabase_flutter.dart'; // import Supabase
 import 'services/mongo_service.dart'; // import MongoService
 
 void main() async {
@@ -22,6 +23,21 @@ void main() async {
 
   // Load environment variables
   await dotenv.load(fileName: ".env");
+
+  // Inisialisasi Supabase
+  try {
+    await Supabase.initialize(
+      url: dotenv.env['SUPABASE_URL'] ?? '',
+      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+    );
+    if (kDebugMode) {
+      print('✅ Supabase Initialized');
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print('❌ Failed to initialize Supabase: $e');
+    }
+  }
 
   // Hubungkan ke MongoDB Atlas saat aplikasi menyala
   try {

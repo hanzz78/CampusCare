@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:mongo_dart/mongo_dart.dart' show ObjectId;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/mongo_service.dart';
 import '../models/tiket_model.dart';
 
@@ -93,15 +93,36 @@ class ReportFormProvider extends ChangeNotifier {
         "Deskripsi laporan minimal 20 karakter! Mohon jelaskan lebih detail.",
       );
 
-    String? base64Image;
-    if (_imagePath != null) {
-      final bytes = File(_imagePath!).readAsBytesSync();
-      base64Image = "data:image/jpeg;base64,${base64Encode(bytes)}";
-    }
-
     final now = DateTime.now();
     final idTiket =
         "TKT-${now.year}-${now.millisecondsSinceEpoch.toString().substring(5)}";
+
+    String? imageUrl;
+    if (_imagePath != null) {
+      final bytes = File(_imagePath!).readAsBytesSync();
+      final fileName = '$idTiket-${now.millisecondsSinceEpoch}.jpg';
+          
+      try {
+        final supabase = Supabase.instance.client;
+        
+        // Upload gambar ke bucket 'tiket_images'
+        await supabase.storage
+            .from('tiket_images')
+            .uploadBinary(
+              fileName,
+              bytes,
+              fileOptions: const FileOptions(contentType: 'image/jpeg'),
+            );
+            
+        // Ambil Public URL agar bisa diakses oleh aplikasi
+        imageUrl = supabase.storage
+            .from('tiket_images')
+            .getPublicUrl(fileName);
+            
+      } catch (e) {
+        throw Exception("Supabase Storage Error: $e");
+      }
+    }
 
     final kategoriModel = KategoriModel(
       utama: _kategoriUtama == 'Sarana Prasarana'
@@ -132,7 +153,7 @@ class ReportFormProvider extends ChangeNotifier {
       'deskripsiLokasi': _deskripsiLokasi.isNotEmpty ? _deskripsiLokasi : null,
       'kategori': kategoriModel.toJson(),
       'lokasi': lokasiModel.toJson(),
-      'buktiVisual': base64Image != null ? [base64Image] : ["placeholder.jpg"],
+      'buktiVisual': imageUrl != null ? [imageUrl] : ["placeholder.jpg"],
       'status': 'Menunggu Verifikasi',
       'tanggalPembuatan': now,
       'tanggalPengajuan': now,

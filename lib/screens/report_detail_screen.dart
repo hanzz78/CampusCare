@@ -47,12 +47,25 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
             pinned: true,
             backgroundColor: const Color(0xFF2A5256),
             flexibleSpace: FlexibleSpaceBar(
-              background: Container(
-                color: Colors.grey, // Placeholder for real image
-                child: const Center(
-                  child: Icon(Icons.image, size: 80, color: Colors.white54),
-                ),
-              ),
+              background: updatedReport.buktiVisual.isNotEmpty && updatedReport.buktiVisual.first != 'placeholder.jpg'
+                ? Image.network(
+                    updatedReport.buktiVisual.first,
+                    fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const Center(child: CircularProgressIndicator(color: Colors.white));
+                    },
+                    errorBuilder: (context, error, stackTrace) => Container(
+                      color: Colors.grey,
+                      child: const Center(child: Icon(Icons.broken_image, size: 80, color: Colors.white54)),
+                    ),
+                  )
+                : Container(
+                    color: Colors.grey, // Placeholder for real image
+                    child: const Center(
+                      child: Icon(Icons.image, size: 80, color: Colors.white54),
+                    ),
+                  ),
             ),
             leading: Padding(
               padding: const EdgeInsets.all(8.0),
