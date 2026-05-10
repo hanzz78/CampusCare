@@ -92,7 +92,6 @@ class AuthProvider extends ChangeNotifier {
             '_id': newObjectId,
             'email': user.email,
             'nama': user.displayName ?? 'Pengguna',
-            'nip': null, // NIP/NIM dikosongkan untuk pendaftaran instan
             'prodi': 'Tidak Diketahui',
             'role': 'User', // Role bawaan
             'isActive': true,

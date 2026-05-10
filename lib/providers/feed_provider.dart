@@ -105,6 +105,29 @@ class FeedProvider extends ChangeNotifier {
     }
   }
 
+  Future<void> deleteComment(String idTiket, String commentId, String userId) async {
+    try {
+      await MongoService().connect();
+      final ticketsCol = MongoService().getCollection('tickets');
+
+      // Menggunakan pull untuk menghapus komentar spesifik berdasarkan id komentar dan id user
+      final result = await ticketsCol.updateOne(
+        where.eq('idTiket', idTiket),
+        modify.pull('comments', {'_id': ObjectId.fromHexString(commentId), 'idUser': ObjectId.fromHexString(userId)})
+      );
+
+      if (result.hasWriteErrors) {
+        throw Exception(result.writeError?.errmsg ?? 'Gagal menghapus komentar');
+      }
+
+      // Refresh data lokal
+      await fetchReports();
+    } catch (e) {
+      debugPrint("Error deleteComment: $e");
+      rethrow;
+    }
+  }
+
   String getTimeAgo(DateTime createdAt) {
     final difference = DateTime.now().difference(createdAt);
     if (difference.inMinutes < 60) {

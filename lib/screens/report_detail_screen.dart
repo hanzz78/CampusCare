@@ -205,9 +205,10 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
 
                   ...updatedReport.comments.map((comment) {
                     return _buildCommentItem(
-                      comment.emailUser.split('@').first, // Samarkan ID dengan nama depan email
-                      comment.content,
-                      feedProvider.getTimeAgo(comment.tanggalKomentar)
+                      comment,
+                      updatedReport.idTiket,
+                      feedProvider,
+                      authProvider.userId,
                     );
                   }).toList(),
 
@@ -309,7 +310,11 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     );
   }
 
-  Widget _buildCommentItem(String name, String text, String time) {
+  Widget _buildCommentItem(CommentModel comment, String idTiket, FeedProvider feedProvider, String? currentUserId) {
+    final name = comment.emailUser.split('@').first;
+    final time = feedProvider.getTimeAgo(comment.tanggalKomentar);
+    final bool isMyComment = currentUserId != null && comment.idUser == currentUserId;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Row(
@@ -318,7 +323,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
           CircleAvatar(
             radius: 18,
             backgroundColor: Colors.grey.shade200,
-            child: Text(name[0], style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
+            child: Text(name.isNotEmpty ? name[0].toUpperCase() : '?', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -329,12 +334,49 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                    Text(time, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                    Row(
+                      children: [
+                        Text(time, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                        if (isMyComment)
+                          PopupMenuButton<String>(
+                            icon: const Icon(Icons.more_vert, size: 18, color: Colors.grey),
+                            padding: EdgeInsets.zero,
+                            itemBuilder: (context) => [
+                              const PopupMenuItem(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.delete, color: Colors.red, size: 20),
+                                    SizedBox(width: 8),
+                                    Text('Hapus', style: TextStyle(color: Colors.red)),
+                                  ],
+                                ),
+                              ),
+                            ],
+                            onSelected: (value) async {
+                              if (value == 'delete') {
+                                if (comment.id != null) {
+                                  try {
+                                    await feedProvider.deleteComment(idTiket, comment.id!, currentUserId);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Komentar berhasil dihapus')));
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal menghapus: ${e.toString().replaceAll("Exception: ", "")}')));
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                          ),
+                      ],
+                    ),
                   ],
                 ),
-                const SizedBox(height: 4),
+                if (!isMyComment) const SizedBox(height: 4), // margin bila tidak ada icon
                 Text(
-                  text,
+                  comment.content,
                   style: const TextStyle(color: Colors.black87, fontSize: 14, height: 1.4),
                 ),
               ],
