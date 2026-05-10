@@ -12,88 +12,63 @@ class MongoService {
 
   Future<void> connect() async {
     if (_db != null && _db!.state == State.OPEN) {
-      try {
-        // Ping database untuk memastikan koneksi socket benar-benar masih hidup
-        await _db!.serverStatus();
-        return; // Sudah terkoneksi dan sehat
-      } catch (e) {
-        if (kDebugMode) {
-          print("Koneksi MongoDB terputus (idle). Mencoba menyambung ulang...");
-        }
-        // Force cleanup
-        try { await _db!.close(); } catch (_) {}
-        _db = null;
-      }
+      return;
     }
 
-    try {
-      if (kDebugMode) {
-        print("Mencoba menyambungkan ke MongoDB Atlas...");
-      }
-      
-      final connStr = dotenv.env['MONGO_URI'];
-      if (connStr == null || connStr.isEmpty) {
-        throw Exception("MONGO_URI tidak ditemukan di file .env");
-      }
+    int retryCount = 0;
+    const int maxRetries = 2;
 
-      _db = await Db.create(connStr);
-      await _db!.open();
-      
-      if (kDebugMode) {
-        print("✅ Berhasil terhubung ke database MongoDB: aplikasi_pelaporan_terpadu");
+    while (retryCount <= maxRetries) {
+      try {
+        final connStr = dotenv.env['MONGO_URI'];
+        if (connStr == null) throw Exception("MONGO_URI missing");
+
+        if (kDebugMode) print("Connecting to MongoDB (Attempt ${retryCount + 1})...");
+
+        // Tutup koneksi lama jika ada yang menggantung
+        if (_db != null) {
+          try { await _db!.close(); } catch (_) {}
+        }
+
+        _db = await Db.create(connStr);
+        
+        // Atlas connection often requires a longer connection timeout
+        await _db!.open(secure: true).timeout(const Duration(seconds: 15));
+        
+        if (kDebugMode) print("✅ Connected to MongoDB");
+        return;
+      } catch (e) {
+        retryCount++;
+        if (kDebugMode) print("⚠️ Connection error: $e");
+        
+        if (retryCount > maxRetries) rethrow;
+        await Future.delayed(Duration(seconds: retryCount * 2));
       }
-    } catch (e) {
-      if (kDebugMode) {
-        print("❌ Gagal terhubung ke MongoDB: $e");
-      }
-      rethrow;
     }
   }
 
-  // Mengambil koleksi secara dinamis
   DbCollection getCollection(String collectionName) {
     if (_db == null || _db!.state != State.OPEN) {
-      throw Exception('Database tidak terkoneksi. Panggil connect() terlebih dahulu.');
+      throw Exception('Database not connected');
     }
     return _db!.collection(collectionName);
   }
 
-  // Fungsi khusus untuk mengecek user
   Future<Map<String, dynamic>?> findUserByEmail(String email) async {
     try {
       await connect();
-      final usersCollection = getCollection('users');
-      final user = await usersCollection.findOne(where.eq('email', email));
-      return user;
+      return await getCollection('users').findOne(where.eq('email', email));
     } catch (e) {
-      if (kDebugMode) {
-        print("❌ Error findUserByEmail: $e");
-      }
       return null;
     }
   }
 
-  // Fungsi untuk mendaftarkan user baru
   Future<void> createUser(Map<String, dynamic> userData) async {
-    try {
-      await connect();
-      final usersCollection = getCollection('users');
-      await usersCollection.insert(userData);
-      if (kDebugMode) {
-        print("✅ User berhasil ditambahkan ke MongoDB.");
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print("❌ Error createUser: $e");
-      }
-      rethrow;
-    }
+    await connect();
+    await getCollection('users').insert(userData);
   }
 
-  // Menutup koneksi (opsional dipanggil saat aplikasi mati)
   Future<void> close() async {
-    if (_db != null && _db!.state == State.OPEN) {
-      await _db!.close();
-    }
+    if (_db != null) await _db!.close();
   }
 }
