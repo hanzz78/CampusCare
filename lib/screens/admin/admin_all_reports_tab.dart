@@ -14,41 +14,60 @@ class AdminAllReportsTab extends StatelessWidget {
       children: [
         // Filter & Sort Bar
         Container(
-          color: Colors.white,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2A5256),
+            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(24)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Category Filter (Chips)
+              const Text(
+                'Filter Laporan',
+                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
+              ),
+              const SizedBox(height: 12),
+              // Category Filter (Custom Chips)
               SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
                 child: Row(
                   children: [
-                    _buildFilterChip(context, provider, 'Semua'),
-                    const SizedBox(width: 8),
-                    _buildFilterChip(context, provider, 'Sarpras'),
-                    const SizedBox(width: 8),
-                    _buildFilterChip(context, provider, 'Kebersihan'),
+                    _buildFilterChip(context, provider, 'Semua', Icons.all_inclusive_rounded),
+                    const SizedBox(width: 10),
+                    _buildFilterChip(context, provider, 'Sarpras', Icons.build_circle_rounded),
+                    const SizedBox(width: 10),
+                    _buildFilterChip(context, provider, 'Kebersihan', Icons.clean_hands_rounded),
                   ],
                 ),
               ),
-              const SizedBox(height: 12),
-              // Sort Dropdown
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text('Urutkan:', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blueGrey)),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
-                    decoration: BoxDecoration(
-                      color: Colors.grey.shade100,
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(color: Colors.grey.shade300),
-                    ),
-                    child: DropdownButtonHideUnderline(
+              const SizedBox(height: 20),
+              // Sort UI
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.sort_rounded, color: Colors.white, size: 18),
+                    const SizedBox(width: 12),
+                    const Text('Urutkan:', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+                    const Spacer(),
+                    DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: provider.selectedSort,
-                        icon: const Icon(Icons.sort, size: 18),
-                        style: const TextStyle(fontSize: 14, color: Colors.black87),
+                        dropdownColor: const Color(0xFF2A5256),
+                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 20),
+                        style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.bold),
                         onChanged: (String? newValue) {
                           if (newValue != null) provider.setSort(newValue);
                         },
@@ -61,8 +80,8 @@ class AdminAllReportsTab extends StatelessWidget {
                         }).toList(),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ],
           ),
@@ -200,23 +219,40 @@ class AdminAllReportsTab extends StatelessWidget {
                   },
                 ),
         ),
-      ],
-    );
-  }
+      ),
+    ],
+  );
+}
 
-  Widget _buildFilterChip(BuildContext context, AdminDashboardProvider provider, String label) {
+  Widget _buildFilterChip(BuildContext context, AdminDashboardProvider provider, String label, IconData icon) {
     final isSelected = provider.selectedCategoryFilter == label;
-    return ChoiceChip(
-      label: Text(label),
-      selected: isSelected,
-      onSelected: (bool selected) {
-        if (selected) {
-          provider.setCategoryFilter(label);
-        }
-      },
-      selectedColor: const Color(0xFF3B696D),
-      labelStyle: TextStyle(color: isSelected ? Colors.white : Colors.black87, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal),
-      backgroundColor: Colors.grey.shade200,
+    return GestureDetector(
+      onTap: () => provider.setCategoryFilter(label),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFF39C12) : Colors.white.withOpacity(0.15),
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isSelected 
+            ? [BoxShadow(color: const Color(0xFFF39C12).withOpacity(0.4), blurRadius: 8, offset: const Offset(0, 4))]
+            : null,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? Colors.white : Colors.white70, size: 16),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 

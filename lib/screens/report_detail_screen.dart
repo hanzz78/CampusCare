@@ -142,7 +142,58 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   const Divider(color: Color(0xFFEEEEEE), thickness: 1.5),
                   const SizedBox(height: 24),
                   
-                  // Removed Status Timeline per request
+                  // Info Status (Approved/Rejected) - Khusus untuk My Reports
+                  if (updatedReport.status != 'Menunggu Verifikasi')
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 24),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: updatedReport.status == 'Approved' ? Colors.green.shade50 : Colors.red.shade50,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: updatedReport.status == 'Approved' ? Colors.green.shade200 : Colors.red.shade200),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                updatedReport.status == 'Approved' ? Icons.check_circle : Icons.cancel,
+                                color: updatedReport.status == 'Approved' ? Colors.green : Colors.red,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                updatedReport.status == 'Approved' ? 'Laporan Disetujui' : 'Laporan Ditolak',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: updatedReport.status == 'Approved' ? Colors.green.shade700 : Colors.red.shade700,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            updatedReport.status == 'Approved' ? 'Catatan Penanggung Jawab:' : 'Alasan Penolakan:',
+                            style: TextStyle(fontSize: 12, color: Colors.grey.shade700, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            (updatedReport.status == 'Approved' ? updatedReport.catatanPJ : updatedReport.alasanRejection) ?? 'Tidak ada catatan.',
+                            style: const TextStyle(fontSize: 14, color: Colors.black87),
+                          ),
+                          if (updatedReport.tanggalVerifikasi != null) ...[
+                            const SizedBox(height: 12),
+                            const Divider(),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Diverifikasi pada: ${updatedReport.tanggalVerifikasi!.toLocal().toString().split('.')[0]}',
+                              style: const TextStyle(fontSize: 11, color: Colors.grey),
+                            ),
+                          ]
+                        ],
+                      ),
+                    ),
                   
                   // Description
                   const Text('Deskripsi Laporan', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
@@ -158,46 +209,47 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   
                   const SizedBox(height: 24),
                   
-                  // Tombol Dukungan Inline
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: () async {
-                        final userId = authProvider.userId;
-                        final email = authProvider.email;
-
-                        if (userId == null || email == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anda harus login untuk memberikan dukungan!')));
-                          return;
-                        }
-
-                        try {
-                          final isUpvoted = await feedProvider.upvote(updatedReport.idTiket, userId, email);
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content: Text(isUpvoted ? 'Dukungan berhasil ditambahkan!' : 'Dukungan berhasil dibatalkan (Unvote)'),
-                            ));
+                  // Tombol Dukungan Inline - HANYA muncul jika masih pending
+                  if (updatedReport.status == 'Menunggu Verifikasi')
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () async {
+                          final userId = authProvider.userId;
+                          final email = authProvider.email;
+  
+                          if (userId == null || email == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anda harus login untuk memberikan dukungan!')));
+                            return;
                           }
-                        } catch (e) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+  
+                          try {
+                            final isUpvoted = await feedProvider.upvote(updatedReport.idTiket, userId, email);
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                content: Text(isUpvoted ? 'Dukungan berhasil ditambahkan!' : 'Dukungan berhasil dibatalkan (Unvote)'),
+                              ));
+                            }
+                          } catch (e) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().replaceAll('Exception: ', ''))));
+                            }
                           }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red.shade50,
-                        foregroundColor: Colors.red.shade400,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: Colors.red.shade200)
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red.shade50,
+                          foregroundColor: Colors.red.shade400,
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(color: Colors.red.shade200)
+                          ),
+                          elevation: 0,
                         ),
-                        elevation: 0,
+                        icon: const Icon(Icons.local_fire_department),
+                        label: Text('Berikan Dukungan (${updatedReport.jumlahVote})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                       ),
-                      icon: const Icon(Icons.local_fire_department),
-                      label: Text('Berikan Dukungan (${updatedReport.jumlahVote})', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                     ),
-                  ),
                   
                   const SizedBox(height: 32),
                   const Divider(color: Color(0xFFEEEEEE), thickness: 1.5),
@@ -236,92 +288,94 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
         ],
       ),
       
-      // Sticky Bottom Bar untuk Input Komentar
-      bottomSheet: Container(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 12,
-          bottom: 12 + MediaQuery.of(context).viewInsets.bottom,
-        ),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(color: Colors.black.withOpacity(0.05), spreadRadius: 0, blurRadius: 10, offset: const Offset(0, -4)),
-          ],
-        ),
-        child: Row(
-          children: [
-            CircleAvatar(
-              radius: 18,
-              backgroundColor: Colors.blueGrey.shade100,
-              child: const Icon(Icons.person, color: Colors.white),
+      // Sticky Bottom Bar untuk Input Komentar - HANYA muncul jika masih pending
+      bottomSheet: updatedReport.status == 'Menunggu Verifikasi' 
+        ? Container(
+            padding: EdgeInsets.only(
+              left: 16,
+              right: 16,
+              top: 12,
+              bottom: 12 + MediaQuery.of(context).viewInsets.bottom,
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: TextField(
-                controller: _commentController,
-                decoration: InputDecoration(
-                  hintText: 'Tambahkan komentar...',
-                  hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  filled: true,
-                  fillColor: Colors.grey.shade100,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide.none,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(color: Colors.black.withOpacity(0.05), spreadRadius: 0, blurRadius: 10, offset: const Offset(0, -4)),
+              ],
+            ),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 18,
+                  backgroundColor: Colors.blueGrey.shade100,
+                  child: const Icon(Icons.person, color: Colors.white),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: TextField(
+                    controller: _commentController,
+                    decoration: InputDecoration(
+                      hintText: 'Tambahkan komentar...',
+                      hintStyle: const TextStyle(color: Colors.grey, fontSize: 14),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      filled: true,
+                      fillColor: Colors.grey.shade100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
                   ),
                 ),
-              ),
-            ),
-            const SizedBox(width: 8),
-            InkWell(
-              onTap: _isSubmittingComment ? null : () async {
-                final content = _commentController.text.trim();
-                final userId = authProvider.userId;
-                final email = authProvider.email;
-
-                if (content.isEmpty) return;
-                if (content.length < 5) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Komentar minimal 5 karakter!')));
-                  return;
-                }
-                if (userId == null || email == null) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anda harus login!')));
-                  return;
-                }
-
-                setState(() => _isSubmittingComment = true);
-
-                try {
-                  await feedProvider.addComment(updatedReport.idTiket, content, userId, email);
-                  _commentController.clear();
-                  if (context.mounted) {
-                    FocusScope.of(context).unfocus(); // Tutup keyboard
-                  }
-                } catch (e) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: ${e.toString().replaceAll("Exception: ", "")}')));
-                  }
-                } finally {
-                  if (mounted) setState(() => _isSubmittingComment = false);
-                }
-              },
-              borderRadius: BorderRadius.circular(24),
-              child: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: _isSubmittingComment ? Colors.grey : const Color(0xFF3B696D),
-                  shape: BoxShape.circle,
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: _isSubmittingComment ? null : () async {
+                    final content = _commentController.text.trim();
+                    final userId = authProvider.userId;
+                    final email = authProvider.email;
+    
+                    if (content.isEmpty) return;
+                    if (content.length < 5) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Komentar minimal 5 karakter!')));
+                      return;
+                    }
+                    if (userId == null || email == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Anda harus login!')));
+                      return;
+                    }
+    
+                    setState(() => _isSubmittingComment = true);
+    
+                    try {
+                      await feedProvider.addComment(updatedReport.idTiket, content, userId, email);
+                      _commentController.clear();
+                      if (context.mounted) {
+                        FocusScope.of(context).unfocus(); // Tutup keyboard
+                      }
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: ${e.toString().replaceAll("Exception: ", "")}')));
+                      }
+                    } finally {
+                      if (mounted) setState(() => _isSubmittingComment = false);
+                    }
+                  },
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: _isSubmittingComment ? Colors.grey : const Color(0xFF3B696D),
+                      shape: BoxShape.circle,
+                    ),
+                    child: _isSubmittingComment 
+                        ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                        : const Icon(Icons.send, color: Colors.white, size: 18),
+                  ),
                 ),
-                child: _isSubmittingComment 
-                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                    : const Icon(Icons.send, color: Colors.white, size: 18),
-              ),
+              ],
             ),
-          ],
-        ),
-      ),
+          )
+        : null,
     );
   }
 

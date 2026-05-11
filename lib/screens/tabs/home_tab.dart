@@ -17,6 +17,9 @@ class _HomeTabState extends State<HomeTab> {
   Widget build(BuildContext context) {
     final feedProvider = context.watch<FeedProvider>();
     final reports = feedProvider.reports.where((r) {
+      // HANYA tampilkan yang masih Menunggu Verifikasi di Public Feed
+      if (r.status != 'Menunggu Verifikasi') return false;
+      
       if (_activeTab == 'Semua Laporan') return true;
       String targetTab = _activeTab == 'Sarana Prasarana' ? 'Sarpras' : _activeTab;
       return r.kategori.utama == targetTab;
@@ -71,67 +74,83 @@ class _HomeTabState extends State<HomeTab> {
       child: SafeArea(
         bottom: false,
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 10),
-            Stack(
-              children: [
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  height: 30,
-                  child: Container(color: const Color(0xFFFFFBE6)),
-                ),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.only(left: 16, right: 32, top: 16, bottom: 16),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF2A5256),
-                        borderRadius: BorderRadius.only(
-                          bottomRight: Radius.circular(30),
-                        ),
-                      ),
-                      child: RichText(
+            // Branding Section
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 16, 24, 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      RichText(
                         text: const TextSpan(
                           children: [
                             TextSpan(
                               text: 'Campus',
-                              style: TextStyle(color: Color(0xFFF39C12), fontSize: 24, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: Color(0xFFF39C12),
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -1,
+                              ),
                             ),
                             TextSpan(
                               text: 'Care',
-                              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: -1,
+                              ),
                             ),
                           ],
                         ),
                       ),
-                    ),
-                    Expanded(
-                      child: Container(
-                        padding: const EdgeInsets.only(top: 10, bottom: 10, left: 16),
-                        decoration: const BoxDecoration(
-                          color: Color(0xFFFFFBE6),
-                          borderRadius: BorderRadius.only(
-                            topLeft: Radius.circular(30),
-                          ),
-                        ),
-                        child: SingleChildScrollView(
-                          scrollDirection: Axis.horizontal,
-                          child: Row(
-                            children: [
-                              _buildTabItem('Semua Laporan'),
-                              _buildTabItem('Sarana Prasarana'),
-                              _buildTabItem('Kebersihan'),
-                            ],
-                          ),
-                        ),
+                      const Text(
+                        'Layanan Aspirasi Mahasiswa',
+                        style: TextStyle(color: Colors.white60, fontSize: 11, fontWeight: FontWeight.w500),
                       ),
+                    ],
+                  ),
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(12),
                     ),
+                    child: IconButton(
+                      onPressed: () {},
+                      icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
+            const SizedBox(height: 20),
+            
+            // Filter Section in White Sheet
+            Container(
+              width: double.infinity,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+              ),
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  children: [
+                    _buildTabItem('Semua Laporan', Icons.grid_view_rounded),
+                    _buildTabItem('Sarana Prasarana', Icons.handyman_outlined),
+                    _buildTabItem('Kebersihan', Icons.clean_hands_outlined),
                   ],
                 ),
-              ],
+              ),
             ),
           ],
         ),
@@ -139,7 +158,7 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
-  Widget _buildTabItem(String title) {
+  Widget _buildTabItem(String title, IconData icon) {
     bool isActive = _activeTab == title;
     return GestureDetector(
       onTap: () {
@@ -147,23 +166,32 @@ class _HomeTabState extends State<HomeTab> {
           _activeTab = title;
         });
       },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.only(right: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: isActive ? const Color(0xFF3B696D) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: isActive ? Colors.transparent : Colors.grey.shade300,
-          ),
+          color: isActive ? const Color(0xFFF1F5F9) : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Text(
-          title,
-          style: TextStyle(
-            color: isActive ? Colors.white : Colors.black87,
-            fontSize: 10,
-            fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
-          ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 18,
+              color: isActive ? const Color(0xFF2A5256) : Colors.grey.shade500,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              title,
+              style: TextStyle(
+                color: isActive ? const Color(0xFF2A5256) : Colors.grey.shade600,
+                fontSize: 13,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.w500,
+              ),
+            ),
+          ],
         ),
       ),
     );
