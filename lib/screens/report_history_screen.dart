@@ -69,194 +69,161 @@ class ReportHistoryScreen extends StatelessWidget {
     TiketModel report,
     FeedProvider feedProvider,
   ) {
-    final Color categoryColor = report.kategori.utama == 'Sarpras'
-        ? const Color(0xFF3B696D)
-        : const Color(0xFFE5A77A);
-        
-    final lokasiStr = report.lokasiDisplay;
+    final isSarpras = report.kategori.utama == 'Sarpras';
+    final color = isSarpras ? const Color(0xFF2A5256) : const Color(0xFFE69B3A);
+    final statusColor = _getStatusColor(report.status);
 
-    return InkWell(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => ReportDetailScreen(report: report),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 15,
+            offset: const Offset(0, 5),
           ),
-        );
-      },
-      borderRadius: BorderRadius.circular(12),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: Colors.grey.shade300),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 4,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Row
-              Row(
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(20),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ReportDetailScreen(report: report),
+                ),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Thumbnail Image
                   Container(
-                    width: 8,
-                    height: 8,
-                    margin: const EdgeInsets.only(top: 6, right: 12),
+                    width: 85,
+                    height: 85,
                     decoration: BoxDecoration(
-                      color: categoryColor,
-                      shape: BoxShape.circle,
+                      color: color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(14),
+                      image: report.buktiVisual.isNotEmpty && report.buktiVisual.first != 'placeholder.jpg'
+                        ? DecorationImage(
+                            image: NetworkImage(report.buktiVisual.first),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                     ),
+                    child: (report.buktiVisual.isEmpty || report.buktiVisual.first == 'placeholder.jpg')
+                      ? Icon(isSarpras ? Icons.build_circle_outlined : Icons.clean_hands_outlined, color: color, size: 30)
+                      : null,
                   ),
+                  const SizedBox(width: 16),
+                  
+                  // Content
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: statusColor.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                report.status.toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  color: statusColor,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              feedProvider.getTimeAgo(report.createdAt),
+                              style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
                         Text(
                           report.judulSingkat,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
+                            color: Color(0xFF1E293B),
+                            height: 1.2,
                           ),
-                          maxLines: 2,
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                         const SizedBox(height: 4),
-                        Text(
-                          report.kategori.utama,
-                          style: TextStyle(
-                            color: Colors.grey.shade600,
-                            fontSize: 12,
-                          ),
+                        Row(
+                          children: [
+                            Icon(Icons.location_on_rounded, size: 12, color: Colors.grey.shade400),
+                            const SizedBox(width: 4),
+                            Expanded(
+                              child: Text(
+                                report.lokasiDisplay,
+                                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            _buildMiniStat(Icons.local_fire_department_rounded, report.jumlahVote.toString(), Colors.red.shade400),
+                            const SizedBox(width: 12),
+                            _buildMiniStat(Icons.chat_bubble_outline_rounded, report.comments.length.toString(), Colors.blueGrey.shade400),
+                          ],
                         ),
                       ],
                     ),
                   ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: _getStatusColor(report.status).withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Text(
-                      report.status,
-                      style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w600,
-                        color: _getStatusColor(report.status),
-                      ),
-                    ),
-                  ),
                 ],
               ),
-              const SizedBox(height: 12),
-              // Location and Time
-              Row(
-                children: [
-                  Icon(
-                    Icons.location_on_outlined,
-                    size: 14,
-                    color: Colors.grey.shade600,
-                  ),
-                  const SizedBox(width: 4),
-                  Expanded(
-                    child: Text(
-                      lokasiStr,
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    feedProvider.getTimeAgo(report.createdAt),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey.shade500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // Description
-              Text(
-                report.deskripsiTiket,
-                style: TextStyle(
-                  fontSize: 13,
-                  color: Colors.grey.shade700,
-                  height: 1.4,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 12),
-              // Footer with Upvote
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.thumb_up_outlined,
-                        size: 16,
-                        color: Colors.grey.shade600,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        '${report.jumlahVote}',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Colors.grey.shade600,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    children: const [
-                      Icon(
-                        Icons.chevron_right,
-                        size: 16,
-                        color: Colors.grey,
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
     );
   }
 
+  Widget _buildMiniStat(IconData icon, String value, Color color) {
+    return Row(
+      children: [
+        Icon(icon, size: 14, color: color),
+        const SizedBox(width: 4),
+        Text(
+          value,
+          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade600),
+        ),
+      ],
+    );
+  }
+
   Color _getStatusColor(String status) {
     switch (status) {
       case 'Menunggu Verifikasi':
-        return const Color(0xFFF59E0B);
+        return const Color(0xFFF39C12);
       case 'Approved':
         return const Color(0xFF10B981);
       case 'Rejected':
-        return Colors.red;
-      case 'Documented':
-        return const Color(0xFF6B7280);
+        return const Color(0xFFEF4444);
       default:
-        return Colors.grey;
+        return const Color(0xFF64748B);
     }
   }
 }
