@@ -18,38 +18,42 @@ class AdminHomeTab extends StatelessWidget {
       return _buildErrorState(provider);
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _buildWelcomeHeader(),
-          const SizedBox(height: 24),
-          
-          // 1. Statistik Angka
-          const Text('Statistik Laporan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
-          const SizedBox(height: 12),
-          _buildTopMetrics(provider),
-          const SizedBox(height: 24),
-
-          // 2. Tingkat Urgensi
-          const Text('Tingkat Urgensi Laporan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
-          const SizedBox(height: 12),
-          _buildUrgencyStats(provider),
-          const SizedBox(height: 24),
-
-          // 3. Statistik Kategori
-          const Text('Kategori Masuk', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
-          const SizedBox(height: 12),
-          _buildCategoryStats(provider),
-          const SizedBox(height: 24),
-
-          // 4. Grafik Waktu & Frekuensi
-          const Text('Tren Laporan (7 Hari)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
-          const SizedBox(height: 12),
-          _buildLineChart(),
-          const SizedBox(height: 40),
-        ],
+    return RefreshIndicator(
+      onRefresh: () => provider.fetchDashboardStats(),
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _buildWelcomeHeader(),
+            const SizedBox(height: 24),
+            
+            // 1. Statistik Angka
+            const Text('Statistik Laporan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
+            const SizedBox(height: 12),
+            _buildTopMetrics(provider),
+            const SizedBox(height: 24),
+  
+            // 2. Tingkat Urgensi
+            const Text('Tingkat Urgensi Laporan', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
+            const SizedBox(height: 12),
+            _buildUrgencyStats(provider),
+            const SizedBox(height: 24),
+  
+            // 3. Statistik Kategori
+            const Text('Kategori Masuk', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
+            const SizedBox(height: 12),
+            _buildCategoryStats(provider),
+            const SizedBox(height: 24),
+  
+            // 4. Grafik Waktu & Frekuensi
+            const Text('Tren Laporan (7 Hari)', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF2A5256))),
+            const SizedBox(height: 12),
+            _buildLineChart(),
+            const SizedBox(height: 40),
+          ],
+        ),
       ),
     );
   }

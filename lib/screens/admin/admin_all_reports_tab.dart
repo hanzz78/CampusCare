@@ -68,15 +68,26 @@ class AdminAllReportsTab extends StatelessWidget {
           ),
         ),
 
-        // List Laporan
         Expanded(
           child: provider.filteredAndSortedReports.isEmpty
-              ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: provider.filteredAndSortedReports.length,
-                  itemBuilder: (context, index) {
-                    final tiket = provider.filteredAndSortedReports[index];
+              ? RefreshIndicator(
+                  onRefresh: () => provider.fetchDashboardStats(),
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.6,
+                      child: _buildEmptyState(),
+                    ),
+                  ),
+                )
+              : RefreshIndicator(
+                  onRefresh: () => provider.fetchDashboardStats(),
+                  child: ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    itemCount: provider.filteredAndSortedReports.length,
+                    itemBuilder: (context, index) {
+                      final tiket = provider.filteredAndSortedReports[index];
                     final isSarpras = tiket.kategori.utama == 'Sarpras';
                     final color = isSarpras ? const Color(0xFF3B696D) : const Color(0xFFE5A77A);
 
