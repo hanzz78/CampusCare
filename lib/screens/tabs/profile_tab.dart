@@ -8,8 +8,25 @@ import '../report_history_screen.dart';
 import '../edit_profile_screen.dart';
 import '../notification_settings_screen.dart';
 
-class ProfileTab extends StatelessWidget {
+class ProfileTab extends StatefulWidget {
   const ProfileTab({super.key});
+
+  @override
+  State<ProfileTab> createState() => _ProfileTabState();
+}
+
+class _ProfileTabState extends State<ProfileTab> {
+  @override
+  void initState() {
+    super.initState();
+    // Fetch user stats when tab is opened
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = context.read<AuthProvider>();
+      if (auth.userId != null) {
+        context.read<FeedProvider>().fetchUserStats(auth.userId!);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,25 +38,25 @@ class ProfileTab extends StatelessWidget {
     final String name = authProvider.displayName ?? email.split('@')[0].toUpperCase();
     final String role = authProvider.role == 'Admin' ? 'Administrator' : 'Mahasiswa';
     
-    // Filter laporan milik user ini saja (sekarang menggunakan idUser asli dari MongoDB)
+    // Filter laporan milik user ini saja
     final userId = authProvider.userId ?? '';
     final myReports = feedProvider.reports.where((r) => r.idUser == userId).toList();
     
     return Container(
-      color: const Color(0xFF3B696D), // Latar belakang Teal untuk Header
+      color: const Color(0xFF2A5256), // Gunakan brand color Teal
       child: SafeArea(
         bottom: false,
         child: Column(
           children: [
             const SizedBox(height: 16),
             // Header: Avatar, Name, Role, Stats
-            _buildHeader(name, role, myReports.length.toString(), '0'),
+            _buildHeader(name, role, myReports.length.toString(), feedProvider.userVoteCount.toString()),
             const SizedBox(height: 24),
             // Konten Bawah (Lengkungan)
             Expanded(
               child: Container(
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF8F3EC), // Warna Cream
+                  color: Color(0xFFF8FAFC), // Cleaner background
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
                 child: SingleChildScrollView(
@@ -63,7 +80,7 @@ class ProfileTab extends StatelessWidget {
                       _buildSectionTitle('Account'),
                       _buildMenuCard([
                         _buildMenuRow(
-                          Icons.person,
+                          Icons.person_outline_rounded,
                           'Edit Profile',
                           onTap: () {
                             Navigator.push(
@@ -79,7 +96,7 @@ class ProfileTab extends StatelessWidget {
                       _buildSectionTitle('Preferences'),
                       _buildMenuCard([
                         _buildMenuRow(
-                          Icons.notifications_none,
+                          Icons.notifications_none_rounded,
                           'Pengaturan Notifikasi',
                           onTap: () {
                             Navigator.push(
@@ -92,7 +109,7 @@ class ProfileTab extends StatelessWidget {
                         ),
                         const Divider(height: 1, indent: 48),
                         _buildMenuRow(
-                          Icons.info_outline,
+                          Icons.info_outline_rounded,
                           'Tentang Aplikasi',
                           onTap: () {
                             showDialog(
@@ -109,22 +126,9 @@ class ProfileTab extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                                 actions: [
-                                  ElevatedButton(
+                                  TextButton(
                                     onPressed: () => Navigator.pop(dialogContext),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF3B696D),
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(8),
-                                      ),
-                                    ),
-                                    child: const Text(
-                                      'Tutup',
-                                      style: TextStyle(
-                                        color: Colors.white,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
+                                    child: const Text('Tutup', style: TextStyle(color: Color(0xFF2A5256), fontWeight: FontWeight.bold)),
                                   ),
                                 ],
                               ),
@@ -153,8 +157,7 @@ class ProfileTab extends StatelessWidget {
                                   ElevatedButton(
                                     onPressed: () {
                                       Navigator.pop(dialogContext); // Tutup dialog
-                                      context.read<AuthProvider>().logout(); // Lakukan logout dengan context utama
-                                      // Paksa pindah ke LoginScreen dan hapus semua stack layar
+                                      context.read<AuthProvider>().logout();
                                       Navigator.pushAndRemoveUntil(
                                         context,
                                         MaterialPageRoute(builder: (context) => const LoginScreen()),
@@ -162,28 +165,28 @@ class ProfileTab extends StatelessWidget {
                                       );
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFFE2BDBA),
+                                      backgroundColor: Colors.red.shade50,
                                       elevation: 0,
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                                     ),
-                                    child: const Text('Ya, Keluar', style: TextStyle(color: Color(0xFF8A2E2E), fontWeight: FontWeight.bold)),
+                                    child: Text('Ya, Keluar', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold)),
                                   ),
                                 ],
                               ),
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFE2BDBA), // Merah pudar
+                            backgroundColor: Colors.red.shade50,
                             elevation: 0,
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                           ),
-                          child: const Text(
+                          child: Text(
                             'Sign Out',
-                            style: TextStyle(color: Color(0xFF8A2E2E), fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: Colors.red.shade700, fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 80), // Padding bawah untuk Bottom Nav
+                      const SizedBox(height: 80),
                     ],
                   ),
                 ),
@@ -200,43 +203,44 @@ class ProfileTab extends StatelessWidget {
       children: [
         // Avatar
         Container(
-          width: 80,
-          height: 80,
+          width: 85,
+          height: 85,
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white, width: 2),
-            image: const DecorationImage(
-              image: AssetImage('assets/images/google_logo.png'), // Placeholder image
-              fit: BoxFit.cover,
-            ),
+            boxShadow: [
+              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))
+            ],
+            border: Border.all(color: Colors.white.withOpacity(0.2), width: 4),
           ),
-          child: const Icon(Icons.person, size: 50, color: Colors.grey),
+          child: const Center(child: Icon(Icons.person_rounded, size: 50, color: Color(0xFF2A5256))),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Text(
           name,
-          style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.5),
         ),
         const SizedBox(height: 4),
         Text(
           'Polban • $role',
-          style: const TextStyle(color: Colors.white70, fontSize: 14),
+          style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 24),
         // Stats Box
         Container(
           margin: const EdgeInsets.symmetric(horizontal: 40),
+          padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.15),
-            borderRadius: BorderRadius.circular(16),
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
           child: IntrinsicHeight(
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildStatItem(pelaporanCount, 'Pelaporan'),
-                const VerticalDivider(color: Colors.white24, thickness: 1, width: 1, indent: 12, endIndent: 12),
+                Container(width: 1, color: Colors.white.withOpacity(0.1), margin: const EdgeInsets.symmetric(vertical: 8)),
                 _buildStatItem(dukunganCount, 'Dukungan'),
               ],
             ),
@@ -247,13 +251,12 @@ class ProfileTab extends StatelessWidget {
   }
 
   Widget _buildStatItem(String count, String label) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+    return Expanded(
       child: Column(
         children: [
-          Text(count, style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+          Text(count, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+          Text(label, style: const TextStyle(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -267,10 +270,10 @@ class ProfileTab extends StatelessWidget {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF7A9E9F)),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
           ),
           if (title == 'My Reports')
-            const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey, size: 14),
         ],
       ),
     );
@@ -279,13 +282,20 @@ class ProfileTab extends StatelessWidget {
   Widget _buildMyReportsCard(List<TiketModel> reports) {
     if (reports.isEmpty) {
       return Container(
-        padding: const EdgeInsets.all(16),
+        width: double.infinity,
+        padding: const EdgeInsets.all(24),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.grey.shade300),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFF1F5F9)),
         ),
-        child: const Center(child: Text('Belum ada laporan', style: TextStyle(color: Colors.grey))),
+        child: Column(
+          children: [
+            Icon(Icons.note_alt_outlined, color: Colors.grey.shade300, size: 40),
+            const SizedBox(height: 12),
+            const Text('Belum ada laporan', style: TextStyle(color: Colors.grey, fontSize: 14)),
+          ],
+        ),
       );
     }
 
@@ -294,8 +304,10 @@ class ProfileTab extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+        ],
       ),
       child: Column(
         children: displayReports.asMap().entries.map((entry) {
@@ -308,9 +320,9 @@ class ProfileTab extends StatelessWidget {
               _buildReportRow(
                 report.judulSingkat, 
                 '${report.kategori.utama} • ${report.lokasi.gedung}', 
-                report.kategori.utama == 'Sarpras' ? const Color(0xFF3B696D) : const Color(0xFFE5A77A)
+                report.kategori.utama == 'Sarpras' ? const Color(0xFF2A5256) : const Color(0xFFE69B3A)
               ),
-              if (!isLast) const Divider(height: 1, indent: 16, endIndent: 16),
+              if (!isLast) Divider(height: 1, color: Colors.grey.shade100, indent: 20, endIndent: 20),
             ],
           );
         }).toList(),
@@ -320,26 +332,26 @@ class ProfileTab extends StatelessWidget {
 
   Widget _buildReportRow(String title, String subtitle, Color bulletColor) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      padding: const EdgeInsets.all(20),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            margin: const EdgeInsets.only(top: 6, right: 12),
-            width: 8,
-            height: 8,
+            width: 10,
+            height: 10,
             decoration: BoxDecoration(color: bulletColor, shape: BoxShape.circle),
           ),
+          const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1E293B))),
                 const SizedBox(height: 4),
-                Text(subtitle, style: TextStyle(color: Colors.grey.shade500, fontSize: 12)),
+                Text(subtitle, style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
               ],
             ),
           ),
+          const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20),
         ],
       ),
     );
@@ -349,8 +361,10 @@ class ProfileTab extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey.shade300),
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
+        ],
       ),
       child: Column(children: children),
     );
@@ -359,22 +373,15 @@ class ProfileTab extends StatelessWidget {
   Widget _buildMenuRow(IconData icon, String title, {required VoidCallback onTap}) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(20),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Icon(icon, size: 20, color: const Color(0xFF3B696D)),
-            ),
+            Icon(icon, size: 22, color: const Color(0xFF2A5256)),
             const SizedBox(width: 16),
-            Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600))),
-            const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+            Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFF1E293B)))),
+            const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFFCBD5E1), size: 14),
           ],
         ),
       ),

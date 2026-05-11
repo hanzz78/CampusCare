@@ -6,9 +6,11 @@ import '../services/mongo_service.dart';
 class FeedProvider extends ChangeNotifier {
   List<TiketModel> _reports = [];
   bool _isLoading = false;
+  int _userVoteCount = 0;
 
   List<TiketModel> get reports => _reports;
   bool get isLoading => _isLoading;
+  int get userVoteCount => _userVoteCount;
 
   FeedProvider() {
     fetchReports();
@@ -61,6 +63,7 @@ class FeedProvider extends ChangeNotifier {
 
         // Refresh data lokal
         await fetchReports();
+        await fetchUserStats(userId);
         return false; // false = di-unvote
       }
 
@@ -85,6 +88,7 @@ class FeedProvider extends ChangeNotifier {
 
       // Refresh data lokal
       await fetchReports();
+      await fetchUserStats(userId);
       return true; // true = di-upvote
     } catch (e) {
       debugPrint("Error upvote: $e");
@@ -144,6 +148,18 @@ class FeedProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint("Error deleteComment: $e");
       rethrow;
+    }
+  }
+
+  Future<void> fetchUserStats(String userId) async {
+    if (userId.isEmpty) return;
+    try {
+      await MongoService().connect();
+      final votesCol = MongoService().getCollection('votes');
+      _userVoteCount = await votesCol.count(where.eq('idUser', ObjectId.fromHexString(userId)));
+      notifyListeners();
+    } catch (e) {
+      debugPrint("❌ Error fetchUserStats: $e");
     }
   }
 
