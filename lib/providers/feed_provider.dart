@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:mongo_dart/mongo_dart.dart' show ObjectId, modify, where;
-import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert';
 import '../models/tiket_model.dart';
 import '../services/mongo_service.dart';
 
@@ -9,12 +7,10 @@ class FeedProvider extends ChangeNotifier {
   List<TiketModel> _reports = [];
   bool _isLoading = false;
   int _userVoteCount = 0;
-  int _userReportCount = 0;
 
   List<TiketModel> get reports => _reports;
   bool get isLoading => _isLoading;
   int get userVoteCount => _userVoteCount;
-  int get userReportCount => _userReportCount;
 
   // Set berisi idTiket yang sudah di-vote oleh user saat ini
   final Set<String> _votedTicketIds = {};
@@ -33,27 +29,8 @@ class FeedProvider extends ChangeNotifier {
       final collection = MongoService().getCollection('tickets');
       final data = await collection.find().toList();
       _reports = data.map((json) => TiketModel.fromJson(json)).toList();
-
-      // Simpan ke cache untuk offline mode
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final String encodedData = jsonEncode(_reports.map((r) => r.toJson()).toList());
-        await prefs.setString('cached_feed_reports', encodedData);
-      } catch (e) {
-        debugPrint("Error caching reports: $e");
-      }
     } catch (e) {
-      debugPrint("❌ Error fetchReports (loading from cache): $e");
-      try {
-        final prefs = await SharedPreferences.getInstance();
-        final String? cachedData = prefs.getString('cached_feed_reports');
-        if (cachedData != null && cachedData.isNotEmpty) {
-          final List<dynamic> decodedList = jsonDecode(cachedData);
-          _reports = decodedList.map((json) => TiketModel.fromJson(json)).toList();
-        }
-      } catch (cacheError) {
-        debugPrint("Error loading cached reports: $cacheError");
-      }
+      debugPrint("❌ Error fetchReports: $e");
     }
 
     _isLoading = false;
@@ -186,24 +163,10 @@ class FeedProvider extends ChangeNotifier {
 
   Future<void> fetchUserStats(String userId) async {
     if (userId.isEmpty) return;
-    
-    // Ambil data dari cache terlebih dahulu (untuk mode offline)
-    final prefs = await SharedPreferences.getInstance();
-    _userVoteCount = prefs.getInt('cached_vote_count_$userId') ?? 0;
-    _userReportCount = prefs.getInt('cached_report_count_$userId') ?? 0;
-    notifyListeners();
-
     try {
       await MongoService().connect();
       final votesCol = MongoService().getCollection('votes');
-      final ticketsCol = MongoService().getCollection('tickets');
-      
       _userVoteCount = await votesCol.count(where.eq('idUser', ObjectId.fromHexString(userId)));
-      _userReportCount = await ticketsCol.count(where.eq('idUser', ObjectId.fromHexString(userId)));
-
-      // Simpan ke cache agar bisa dibaca saat offline nanti
-      await prefs.setInt('cached_vote_count_$userId', _userVoteCount);
-      await prefs.setInt('cached_report_count_$userId', _userReportCount);
 
       // Load semua idTiket yang sudah di-vote user ini
       final myVotes = await votesCol

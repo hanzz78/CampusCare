@@ -16,7 +16,6 @@ import 'package:flutter/foundation.dart'; // import kDebugMode
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // import dotenv
 import 'package:supabase_flutter/supabase_flutter.dart'; // import Supabase
 import 'services/mongo_service.dart'; // import MongoService
-import 'package:hive_flutter/hive_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -61,19 +60,6 @@ void main() async {
   } catch (e) {
     if (kDebugMode) {
       print('❌ Failed to connect to MongoDB: $e');
-    }
-  }
-
-  // Initialize Hive
-  try {
-    await Hive.initFlutter();
-    await Hive.openBox('offline_reports');
-    if (kDebugMode) {
-      print('✅ Hive Initialized');
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      print('❌ Failed to initialize Hive: $e');
     }
   }
 

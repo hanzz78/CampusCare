@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../models/tiket_model.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import '../login_screen.dart';
 import '../report_history_screen.dart';
 import '../edit_profile_screen.dart';
@@ -51,7 +50,7 @@ class _ProfileTabState extends State<ProfileTab> {
           children: [
             const SizedBox(height: 16),
             // Header: Avatar, Name, Role, Stats
-            _buildHeader(context, name, role, feedProvider.userReportCount.toString(), feedProvider.userVoteCount.toString()),
+            _buildHeader(name, role, myReports.length.toString(), feedProvider.userVoteCount.toString()),
             const SizedBox(height: 24),
             // Konten Bawah (Lengkungan)
             Expanded(
@@ -60,56 +59,23 @@ class _ProfileTabState extends State<ProfileTab> {
                   color: Color(0xFFF8F3EC), // Cream background matching design
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
-                child: RefreshIndicator(
-                  color: const Color(0xFF3B696D),
-                  onRefresh: () async {
-                    final auth = context.read<AuthProvider>();
-                    if (auth.userId != null) {
-                      await context.read<FeedProvider>().fetchUserStats(auth.userId!);
-                    }
-                    await context.read<FeedProvider>().fetchReports();
-                  },
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ValueListenableBuilder(
-                          valueListenable: Hive.box('offline_reports').listenable(),
-                          builder: (context, Box box, _) {
-                            if (box.isEmpty) return const SizedBox.shrink();
-
-                            final offlineReports = [];
-                            for (int i = 0; i < box.length; i++) {
-                              final data = box.getAt(i);
-                              if (data is Map) {
-                                offlineReports.add(data);
-                              }
-                            }
-
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildSectionTitle('Laporan Offline (Menunggu Sinyal)'),
-                                _buildOfflineReportsCard(offlineReports),
-                                const SizedBox(height: 24),
-                              ],
-                            );
-                          },
-                        ),
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const ReportHistoryScreen(),
-                              ),
-                            );
-                          },
-                          child: _buildSectionTitle('My Reports'),
-                        ),
-                        _buildMyReportsCard(myReports),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ReportHistoryScreen(),
+                            ),
+                          );
+                        },
+                        child: _buildSectionTitle('My Reports'),
+                      ),
+                      _buildMyReportsCard(myReports),
                       const SizedBox(height: 24),
                       _buildSectionTitle('Account'),
                       _buildMenuCard([
@@ -227,7 +193,6 @@ class _ProfileTabState extends State<ProfileTab> {
                     ],
                   ),
                 ),
-                ),
               ),
             ),
           ],
@@ -236,7 +201,7 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, String name, String role, String pelaporanCount, String dukunganCount) {
+  Widget _buildHeader(String name, String role, String pelaporanCount, String dukunganCount) {
     return Column(
       children: [
         // Avatar
@@ -354,37 +319,6 @@ class _ProfileTabState extends State<ProfileTab> {
                 report.kategori.utama == 'Sarpras' ? const Color(0xFF2A5256) : const Color(0xFFE69B3A)
               ),
               if (!isLast) Divider(height: 1, color: Colors.grey.shade100, indent: 20, endIndent: 20),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
-  Widget _buildOfflineReportsCard(List<dynamic> reports) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.orange.shade200),
-      ),
-      child: Column(
-        children: reports.asMap().entries.map((entry) {
-          final index = entry.key;
-          final report = entry.value as Map;
-          final isLast = index == reports.length - 1;
-          
-          final kategoriUtama = report['kategori']?['utama'] ?? 'Lainnya';
-          final gedung = report['lokasi']?['gedung'] ?? 'Tidak Diketahui';
-          
-          return Column(
-            children: [
-              _buildReportRow(
-                report['judulSingkat'] ?? 'Tanpa Judul', 
-                '$kategoriUtama • $gedung', 
-                Colors.orange,
-              ),
-              if (!isLast) Divider(height: 1, color: Colors.orange.shade200, indent: 20, endIndent: 20),
             ],
           );
         }).toList(),
