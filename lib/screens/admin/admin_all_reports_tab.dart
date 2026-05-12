@@ -3,8 +3,15 @@ import 'package:provider/provider.dart';
 import '../../providers/admin_dashboard_provider.dart';
 import 'admin_report_review_screen.dart';
 
-class AdminAllReportsTab extends StatelessWidget {
+class AdminAllReportsTab extends StatefulWidget {
   const AdminAllReportsTab({super.key});
+
+  @override
+  State<AdminAllReportsTab> createState() => _AdminAllReportsTabState();
+}
+
+class _AdminAllReportsTabState extends State<AdminAllReportsTab> {
+  bool _isFilterExpanded = true;
 
   @override
   Widget build(BuildContext context) {
@@ -25,63 +32,121 @@ class AdminAllReportsTab extends StatelessWidget {
               ),
             ],
           ),
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 24),
+          padding: const EdgeInsets.fromLTRB(20, 12, 20, 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Filter Laporan',
-                style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
-              ),
-              const SizedBox(height: 12),
-              // Category Filter (Custom Chips)
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                physics: const BouncingScrollPhysics(),
-                child: Row(
-                  children: [
-                    _buildFilterChip(context, provider, 'Semua', Icons.all_inclusive_rounded),
-                    const SizedBox(width: 10),
-                    _buildFilterChip(context, provider, 'Sarpras', Icons.build_circle_rounded),
-                    const SizedBox(width: 10),
-                    _buildFilterChip(context, provider, 'Kebersihan', Icons.clean_hands_rounded),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-              // Sort UI
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.sort_rounded, color: Colors.white, size: 18),
-                    const SizedBox(width: 12),
-                    const Text('Urutkan:', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
-                    const Spacer(),
-                    DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: provider.selectedSort,
-                        dropdownColor: const Color(0xFF2A5256),
-                        icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 20),
-                        style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.bold),
-                        onChanged: (String? newValue) {
-                          if (newValue != null) provider.setSort(newValue);
-                        },
-                        items: <String>['Waktu Terbaru', 'Waktu Terlama', 'Urgensi Tertinggi']
-                            .map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
-                      ),
+              // Header Filter dengan Tombol Toggle
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Filter Laporan',
+                    style: TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 1),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _isFilterExpanded = !_isFilterExpanded;
+                      });
+                    },
+                    icon: Icon(
+                      _isFilterExpanded ? Icons.keyboard_arrow_up_rounded : Icons.keyboard_arrow_down_rounded,
+                      color: Colors.white,
                     ),
-                  ],
-                ),
+                  ),
+                ],
+              ),
+              
+              // Bagian Filter yang Bisa Ditutup/Buka
+              AnimatedSize(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeInOut,
+                child: _isFilterExpanded
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Kategori Laporan',
+                            style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
+                          ),
+                          const SizedBox(height: 12),
+                          // Category Filter (Custom Chips)
+                          SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            physics: const BouncingScrollPhysics(),
+                            child: Row(
+                              children: [
+                                _buildFilterChip(context, provider, 'Semua', Icons.all_inclusive_rounded),
+                                const SizedBox(width: 10),
+                                _buildFilterChip(context, provider, 'Sarpras', Icons.build_circle_rounded),
+                                const SizedBox(width: 10),
+                                _buildFilterChip(context, provider, 'Kebersihan', Icons.clean_hands_rounded),
+                              ],
+                            ),
+                          ),
+                          // Status Filter (Only show if 'Selesai Direview')
+                          if (provider.adminActionTab == 'Selesai Direview') ...[
+                            const SizedBox(height: 16),
+                            const Text(
+                              'Status Tindakan',
+                              style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1),
+                            ),
+                            const SizedBox(height: 8),
+                            SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              physics: const BouncingScrollPhysics(),
+                              child: Row(
+                                children: [
+                                  _buildStatusFilterChip(context, provider, 'Semua', Icons.list),
+                                  const SizedBox(width: 10),
+                                  _buildStatusFilterChip(context, provider, 'Disetujui', Icons.check_circle_outline),
+                                  const SizedBox(width: 10),
+                                  _buildStatusFilterChip(context, provider, 'Ditolak', Icons.cancel_outlined),
+                                ],
+                              ),
+                            ),
+                          ],
+                          const SizedBox(height: 20),
+                          // Sort UI
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.sort_rounded, color: Colors.white, size: 18),
+                                const SizedBox(width: 12),
+                                const Text('Urutkan:', style: TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w500)),
+                                const Spacer(),
+                                DropdownButtonHideUnderline(
+                                  child: DropdownButton<String>(
+                                    value: provider.selectedSort,
+                                    dropdownColor: const Color(0xFF2A5256),
+                                    icon: const Icon(Icons.keyboard_arrow_down_rounded, color: Colors.white, size: 20),
+                                    style: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.bold),
+                                    onChanged: (String? newValue) {
+                                      if (newValue != null) provider.setSort(newValue);
+                                    },
+                                    items: <String>['Waktu Terbaru', 'Waktu Terlama', 'Urgensi Tertinggi']
+                                        .map<DropdownMenuItem<String>>((String value) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Text(value),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                        ],
+                      )
+                    : const SizedBox.shrink(),
               ),
             ],
           ),
@@ -246,6 +311,36 @@ class AdminAllReportsTab extends StatelessWidget {
               label,
               style: TextStyle(
                 color: Colors.white,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 13,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusFilterChip(BuildContext context, AdminDashboardProvider provider, String label, IconData icon) {
+    final isSelected = provider.adminStatusFilter == label;
+    return GestureDetector(
+      onTap: () => provider.setAdminStatusFilter(label),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected ? const Color(0xFFE5A77A) : Colors.white.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: isSelected ? Colors.transparent : Colors.white.withOpacity(0.2)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? Colors.white : Colors.white70, size: 16),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.white70,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 fontSize: 13,
               ),
