@@ -14,9 +14,15 @@ class AdminDashboardProvider extends ChangeNotifier {
 
   String _selectedCategoryFilter = 'Semua'; 
   String _selectedSort = 'Waktu Terbaru';
+  
+  // New States for Action Segmentation
+  String _adminActionTab = 'Menunggu Tindakan'; // 'Menunggu Tindakan' or 'Selesai Direview'
+  String _adminStatusFilter = 'Semua'; // 'Semua', 'Disetujui', 'Ditolak'
 
   String get selectedCategoryFilter => _selectedCategoryFilter;
   String get selectedSort => _selectedSort;
+  String get adminActionTab => _adminActionTab;
+  String get adminStatusFilter => _adminStatusFilter;
 
   AdminDashboardProvider() {
     fetchDashboardStats();
@@ -31,6 +37,16 @@ class AdminDashboardProvider extends ChangeNotifier {
     _selectedSort = sort;
     notifyListeners();
   }
+
+  void setAdminActionTab(String tab) {
+    _adminActionTab = tab;
+    notifyListeners();
+  }
+
+  void setAdminStatusFilter(String status) {
+    _adminStatusFilter = status;
+    notifyListeners();
+  }
   int get totalLaporan => _reports.length;
   int get belumDireview => _reports.where((t) => t.status == 'Menunggu Verifikasi').length;
   int get selesai => _reports.where((t) => t.status == 'Approved' || t.status == 'Rejected' || t.status == 'Documented').length;
@@ -42,6 +58,21 @@ class AdminDashboardProvider extends ChangeNotifier {
   List<TiketModel> get filteredAndSortedReports {
     List<TiketModel> result = List.from(_reports);
 
+    // 1. Filter by Action Tab (Pending vs Reviewed)
+    if (_adminActionTab == 'Menunggu Tindakan') {
+      result = result.where((t) => t.status == 'Menunggu Verifikasi').toList();
+    } else if (_adminActionTab == 'Selesai Direview') {
+      result = result.where((t) => t.status != 'Menunggu Verifikasi').toList();
+      
+      // 2. Filter by Status (Approve vs Reject) ONLY if in Reviewed tab
+      if (_adminStatusFilter == 'Disetujui') {
+        result = result.where((t) => t.status == 'Approved').toList();
+      } else if (_adminStatusFilter == 'Ditolak') {
+        result = result.where((t) => t.status == 'Rejected').toList();
+      }
+    }
+
+    // 3. Filter by Category
     if (_selectedCategoryFilter != 'Semua') {
       result = result.where((t) => t.kategori.utama == _selectedCategoryFilter).toList();
     }

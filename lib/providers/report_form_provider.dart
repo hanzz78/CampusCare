@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:mongo_dart/mongo_dart.dart' show ObjectId;
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import '../services/hive_service.dart';
 import '../services/mongo_service.dart';
 import '../models/tiket_model.dart';
 
@@ -94,6 +96,44 @@ class ReportFormProvider extends ChangeNotifier {
       );
 
     final now = DateTime.now();
+
+    final kategoriModel = KategoriModel(
+      utama: _kategoriUtama == 'Sarana Prasarana'
+          ? 'Sarpras'
+          : _kategoriUtama ?? 'Lainnya',
+      jenis: _kategoriJenis ?? 'Umum',
+    );
+
+    final lokasiModel = LokasiModel(
+      gedung: _gedung ?? 'Tidak Diketahui',
+      lantai: 0,
+      ruangan: _deskripsiLokasi.isNotEmpty ? _deskripsiLokasi : 'Area Umum',
+    );
+
+    // Cek koneksi internet
+    final connectivityResult = await Connectivity().checkConnectivity();
+    final isOnline = connectivityResult.isNotEmpty && !connectivityResult.contains(ConnectivityResult.none);
+
+    if (!isOnline) {
+      final offlineData = {
+        'localImagePath': _imagePath,
+        'emailUser': emailUser,
+        'userIdHex': userId,
+        'judulSingkat': _judul,
+        'deskripsiTiket': _deskripsi,
+        'deskripsiLokasi': _deskripsiLokasi.isNotEmpty ? _deskripsiLokasi : null,
+        'kategori': kategoriModel.toJson(),
+        'lokasi': lokasiModel.toJson(),
+        'timestamp': now.millisecondsSinceEpoch,
+      };
+
+      await HiveService().saveOfflineReport(offlineData);
+      debugPrint("📴 Koneksi terputus. Laporan disimpan secara offline!");
+      
+      // Lemparkan exception khusus agar UI tahu bahwa ini offline
+      throw Exception("OFFLINE_SAVED");
+    }
+
     final idTiket =
         "TKT-${now.year}-${now.millisecondsSinceEpoch.toString().substring(5)}";
 
@@ -123,19 +163,6 @@ class ReportFormProvider extends ChangeNotifier {
         throw Exception("Supabase Storage Error: $e");
       }
     }
-
-    final kategoriModel = KategoriModel(
-      utama: _kategoriUtama == 'Sarana Prasarana'
-          ? 'Sarpras'
-          : _kategoriUtama ?? 'Lainnya',
-      jenis: _kategoriJenis ?? 'Umum',
-    );
-
-    final lokasiModel = LokasiModel(
-      gedung: _gedung ?? 'Tidak Diketahui',
-      lantai: 0,
-      ruangan: _deskripsiLokasi.isNotEmpty ? _deskripsiLokasi : 'Area Umum',
-    );
 
     ObjectId userObjectId;
     try {

@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../providers/auth_provider.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -14,6 +16,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _emailController;
   late TextEditingController _locationController;
   late TextEditingController _phoneController;
+  
+  File? _selectedImage;
+  bool _isUploadingImage = false;
 
   @override
   void initState() {
@@ -32,6 +37,42 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _locationController.dispose();
     _phoneController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+      _uploadImage();
+    }
+  }
+
+  Future<void> _uploadImage() async {
+    if (_selectedImage == null) return;
+    
+    setState(() => _isUploadingImage = true);
+    try {
+      await context.read<AuthProvider>().updateProfileImage(_selectedImage!);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Foto profil berhasil diperbarui'), backgroundColor: Colors.green),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal mengunggah foto: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+      }
+    }
   }
 
   @override
@@ -60,35 +101,44 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             Center(
               child: Column(
                 children: [
-                  Container(
-                    width: 100,
-                    height: 100,
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: const Color(0xFF3B696D),
-                        width: 2,
+                  Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: const Color(0xFF3B696D),
+                            width: 2,
+                          ),
+                          image: _selectedImage != null
+                              ? DecorationImage(image: FileImage(_selectedImage!), fit: BoxFit.cover)
+                              : (context.watch<AuthProvider>().profileImageUrl != null
+                                  ? DecorationImage(
+                                      image: NetworkImage(context.watch<AuthProvider>().profileImageUrl!),
+                                      fit: BoxFit.cover)
+                                  : null),
+                        ),
+                        child: _selectedImage == null && context.watch<AuthProvider>().profileImageUrl == null
+                            ? const Icon(
+                                Icons.person,
+                                size: 60,
+                                color: Color(0xFF3B696D),
+                              )
+                            : null,
                       ),
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 60,
-                      color: Color(0xFF3B696D),
-                    ),
+                      if (_isUploadingImage)
+                        const CircularProgressIndicator(color: Color(0xFF3B696D)),
+                    ],
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton.icon(
-                    onPressed: () {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Fitur ubah foto akan segera tersedia'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
+                    onPressed: _isUploadingImage ? null : _pickImage,
                     icon: const Icon(Icons.camera_alt, size: 18),
-                    label: const Text('Ubah Foto'),
+                    label: Text(_isUploadingImage ? 'Mengunggah...' : 'Ubah Foto'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF3B696D),
                       foregroundColor: Colors.white,

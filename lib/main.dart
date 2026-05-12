@@ -16,6 +16,11 @@ import 'package:flutter/foundation.dart'; // import kDebugMode
 import 'package:flutter_dotenv/flutter_dotenv.dart'; // import dotenv
 import 'package:supabase_flutter/supabase_flutter.dart'; // import Supabase
 import 'services/mongo_service.dart'; // import MongoService
+import 'services/hive_service.dart';
+import 'services/network_connectivity_service.dart';
+
+// Global Navigator Key
+final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -32,6 +37,12 @@ void main() async {
       );
     }
   }
+
+  // Inisialisasi Hive untuk penyimpanan offline
+  await HiveService().init();
+
+  // Mulai memantau konektivitas jaringan untuk sync otomatis
+  NetworkConnectivityService().startListening();
 
   // Load environment variables
   await dotenv.load(fileName: ".env");
@@ -82,6 +93,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey,
       title: 'CampusCare Polban',
       theme: ThemeData(primarySwatch: Colors.blue),
       home: Consumer<AuthProvider>(

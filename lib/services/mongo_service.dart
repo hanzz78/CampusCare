@@ -1,7 +1,7 @@
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:flutter/foundation.dart';
-
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class MongoService {
   static final MongoService _instance = MongoService._internal();
@@ -12,7 +12,20 @@ class MongoService {
 
   Future<void> connect() async {
     if (_db != null && _db!.state == State.OPEN) {
-      return;
+      if (_db!.isConnected) {
+        try {
+          // Lakukan ping untuk memastikan koneksi masih aktif
+          await _db!.pingCommand();
+          return;
+        } catch (e) {
+          if (kDebugMode) print("Stale MongoDB connection. Reconnecting...");
+          try { await _db!.close(); } catch (_) {}
+          _db = null;
+        }
+      } else {
+        try { await _db!.close(); } catch (_) {}
+        _db = null;
+      }
     }
 
     int retryCount = 0;
@@ -20,6 +33,11 @@ class MongoService {
 
     while (retryCount <= maxRetries) {
       try {
+        final connectivityResult = await Connectivity().checkConnectivity();
+        if (connectivityResult.isEmpty || connectivityResult.first == ConnectivityResult.none) {
+          throw Exception('NO_INTERNET');
+        }
+
         final connStr = dotenv.env['MONGO_URI'];
         if (connStr == null) throw Exception("MONGO_URI missing");
 
@@ -38,6 +56,10 @@ class MongoService {
         if (kDebugMode) print("✅ Connected to MongoDB");
         return;
       } catch (e) {
+        if (e.toString().contains('NO_INTERNET')) {
+          if (kDebugMode) print("⚠️ Operating in offline mode.");
+          rethrow; // Langsung gagal tanpa retry jika tidak ada internet
+        }
         retryCount++;
         if (kDebugMode) print("⚠️ Connection error: $e");
         
@@ -66,6 +88,19 @@ class MongoService {
   Future<void> createUser(Map<String, dynamic> userData) async {
     await connect();
     await getCollection('users').insert(userData);
+  }
+
+  Future<void> updateUser(String userId, Map<String, dynamic> data) async {
+    await connect();
+    final col = getCollection('users');
+    final objectId = ObjectId.fromHexString(userId);
+    
+    var modifier = modify;
+    data.forEach((key, value) {
+      modifier = modifier.set(key, value);
+    });
+    
+    await col.updateOne(where.eq('_id', objectId), modifier);
   }
 
   Future<void> close() async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/admin_dashboard_provider.dart';
 import '../login_screen.dart';
 import 'admin_home_tab.dart';
 import 'admin_all_reports_tab.dart';
@@ -27,8 +28,10 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
           _selectedIndex == 0 
             ? 'Dashboard Penanggung Jawab' 
             : _selectedIndex == 1 
-              ? 'Semua Laporan' 
-              : 'Profil Saya',
+              ? 'Menunggu Tindakan' 
+              : _selectedIndex == 2
+                ? 'Selesai Direview'
+                : 'Profil Saya',
           style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18)
         ),
         backgroundColor: const Color(0xFF3B696D), // Dark Teal
@@ -73,7 +76,8 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
         index: _selectedIndex,
         children: const [
           AdminHomeTab(),
-          AdminAllReportsTab(),
+          AdminAllReportsTab(), // for Pending
+          AdminAllReportsTab(), // for Reviewed
           ProfileTab(), // Reuse user's profile tab, or create AdminProfileTab if needed
         ],
       ),
@@ -90,6 +94,12 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
         child: BottomNavigationBar(
           currentIndex: _selectedIndex,
           onTap: (index) {
+            final provider = context.read<AdminDashboardProvider>();
+            if (index == 1) {
+              provider.setAdminActionTab('Menunggu Tindakan');
+            } else if (index == 2) {
+              provider.setAdminActionTab('Selesai Direview');
+            }
             setState(() {
               _selectedIndex = index;
             });
@@ -108,9 +118,14 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
               label: 'Home',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.list_alt_outlined),
-              activeIcon: Icon(Icons.list_alt),
-              label: 'Semua Laporan',
+              icon: Icon(Icons.pending_actions_outlined),
+              activeIcon: Icon(Icons.pending_actions),
+              label: 'Menunggu',
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.fact_check_outlined),
+              activeIcon: Icon(Icons.fact_check),
+              label: 'Selesai',
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.person_outline),
