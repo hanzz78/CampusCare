@@ -218,15 +218,26 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                                           formProvider.resetForm();
                                           Navigator.pop(context);
                                         } catch (e) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                'Gagal mengirim laporan: $e',
+                                          if (e.toString().contains("OFFLINE_SAVED")) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Koneksi terputus. Laporan disimpan secara offline dan akan dikirim otomatis saat online!'),
+                                                backgroundColor: Colors.orange,
                                               ),
-                                            ),
-                                          );
+                                            );
+                                            context.read<ReportFormProvider>().resetForm();
+                                            Navigator.pop(context);
+                                          } else {
+                                            ScaffoldMessenger.of(
+                                              context,
+                                            ).showSnackBar(
+                                              SnackBar(
+                                                content: Text(
+                                                  'Gagal mengirim laporan: $e',
+                                                ),
+                                              ),
+                                            );
+                                          }
                                         } finally {
                                           if (mounted) {
                                             setState(() {
