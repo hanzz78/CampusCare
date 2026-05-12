@@ -7,6 +7,7 @@ import 'providers/auth_provider.dart';
 import 'providers/admin_dashboard_provider.dart';
 import 'providers/feed_provider.dart';
 import 'providers/report_form_provider.dart';
+import 'screens/landing_screen.dart';
 import 'screens/login_screen.dart';
 import 'screens/dashboard_screen.dart';
 import 'screens/admin/admin_shell_screen.dart';
@@ -18,8 +19,19 @@ import 'services/mongo_service.dart'; // import MongoService
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  
-  await Firebase.initializeApp();
+
+  try {
+    await Firebase.initializeApp();
+    if (kDebugMode) {
+      print('✅ Firebase Initialized');
+    }
+  } catch (e) {
+    if (kDebugMode) {
+      print(
+        '⚠️ Firebase initialization failed: $e. Continuing without Firebase.',
+      );
+    }
+  }
 
   // Load environment variables
   await dotenv.load(fileName: ".env");
@@ -74,14 +86,14 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(primarySwatch: Colors.blue),
       home: Consumer<AuthProvider>(
         builder: (context, auth, child) {
-          // Auto Routing: Kalau udah login, lempar ke Dashboard. Kalau belum, ke Login.
+          // Auto Routing: Kalau udah login, lempar ke Dashboard. Kalau belum, ke Landing.
           if (auth.isLoggedIn) {
             if (auth.role == 'Penanggung Jawab') {
               return const AdminShellScreen();
             }
             return DashboardScreen(role: auth.role);
           }
-          return const LoginScreen();
+          return const LandingScreen();
         },
       ),
     );

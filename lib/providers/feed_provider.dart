@@ -12,6 +12,10 @@ class FeedProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   int get userVoteCount => _userVoteCount;
 
+  // Set berisi idTiket yang sudah di-vote oleh user saat ini
+  final Set<String> _votedTicketIds = {};
+  bool hasUserVoted(String idTiket) => _votedTicketIds.contains(idTiket);
+
   FeedProvider() {
     fetchReports();
   }
@@ -61,6 +65,9 @@ class FeedProvider extends ChangeNotifier {
           throw Exception(updateResult.writeError?.errmsg ?? 'Gagal menghapus vote');
         }
 
+        // Update local state
+        _votedTicketIds.remove(idTiket);
+
         // Refresh data lokal
         await fetchReports();
         await fetchUserStats(userId);
@@ -85,6 +92,9 @@ class FeedProvider extends ChangeNotifier {
       if (updateResult.hasWriteErrors) {
         throw Exception(updateResult.writeError?.errmsg ?? 'Gagal menyimpan vote');
       }
+
+      // Update local state
+      _votedTicketIds.add(idTiket);
 
       // Refresh data lokal
       await fetchReports();
@@ -157,6 +167,16 @@ class FeedProvider extends ChangeNotifier {
       await MongoService().connect();
       final votesCol = MongoService().getCollection('votes');
       _userVoteCount = await votesCol.count(where.eq('idUser', ObjectId.fromHexString(userId)));
+
+      // Load semua idTiket yang sudah di-vote user ini
+      final myVotes = await votesCol
+          .find(where.eq('idUser', ObjectId.fromHexString(userId)))
+          .toList();
+      _votedTicketIds.clear();
+      for (final v in myVotes) {
+        if (v['idTiket'] != null) _votedTicketIds.add(v['idTiket'].toString());
+      }
+
       notifyListeners();
     } catch (e) {
       debugPrint("❌ Error fetchUserStats: $e");
