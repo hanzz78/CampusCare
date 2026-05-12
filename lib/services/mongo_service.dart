@@ -1,7 +1,7 @@
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:flutter/foundation.dart';
-
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class MongoService {
   static final MongoService _instance = MongoService._internal();
@@ -33,6 +33,11 @@ class MongoService {
 
     while (retryCount <= maxRetries) {
       try {
+        final connectivityResult = await Connectivity().checkConnectivity();
+        if (connectivityResult.isEmpty || connectivityResult.first == ConnectivityResult.none) {
+          throw Exception('NO_INTERNET');
+        }
+
         final connStr = dotenv.env['MONGO_URI'];
         if (connStr == null) throw Exception("MONGO_URI missing");
 
@@ -51,6 +56,10 @@ class MongoService {
         if (kDebugMode) print("✅ Connected to MongoDB");
         return;
       } catch (e) {
+        if (e.toString().contains('NO_INTERNET')) {
+          if (kDebugMode) print("⚠️ Operating in offline mode.");
+          rethrow; // Langsung gagal tanpa retry jika tidak ada internet
+        }
         retryCount++;
         if (kDebugMode) print("⚠️ Connection error: $e");
         

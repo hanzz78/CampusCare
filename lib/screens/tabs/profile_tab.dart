@@ -39,9 +39,12 @@ class _ProfileTabState extends State<ProfileTab> {
     final String name = authProvider.displayName ?? email.split('@')[0].toUpperCase();
     final String role = authProvider.role == 'Admin' ? 'Administrator' : 'Mahasiswa';
     
-    // Filter laporan milik user ini saja
+    // Filter laporan milik user ini saja (untuk daftar laporan yang mungkin tersisa offline)
     final userId = authProvider.userId ?? '';
     final myReports = feedProvider.reports.where((r) => r.idUser == userId).toList();
+    
+    // Gunakan userReportCount yang sudah dicache untuk mode offline
+    final String pelaporanCount = feedProvider.userReportCount.toString();
     
     return Container(
       color: const Color(0xFF2A5256), // Gunakan brand color Teal
@@ -51,7 +54,7 @@ class _ProfileTabState extends State<ProfileTab> {
           children: [
             const SizedBox(height: 16),
             // Header: Avatar, Name, Role, Stats
-            _buildHeader(context, name, role, myReports.length.toString(), feedProvider.userVoteCount.toString()),
+            _buildHeader(context, name, role, pelaporanCount, feedProvider.userVoteCount.toString()),
             const SizedBox(height: 24),
             // Konten Bawah (Lengkungan)
             Expanded(

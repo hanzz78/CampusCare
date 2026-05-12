@@ -19,6 +19,8 @@ class AuthProvider extends ChangeNotifier {
   String _role = 'user'; // Default role
   String? _userId;
   String? _profileImageUrl;
+  String? _cachedEmail;
+  String? _cachedName;
 
   // Getters supaya bisa dibaca oleh UI
   bool get isLoading => _isLoading;
@@ -26,8 +28,8 @@ class AuthProvider extends ChangeNotifier {
   String get role => _role;
   String? get userId => _userId;
   String? get profileImageUrl => _profileImageUrl;
-  String? get email => _auth.currentUser?.email;
-  String? get displayName => _auth.currentUser?.displayName;
+  String? get email => _auth.currentUser?.email ?? _cachedEmail;
+  String? get displayName => _auth.currentUser?.displayName ?? _cachedName;
 
   // Cek apakah user sudah login sebelumnya saat aplikasi dibuka
   Future<void> checkSession() async {
@@ -36,6 +38,8 @@ class AuthProvider extends ChangeNotifier {
       _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
       _role = prefs.getString('userRole') ?? 'user';
       _userId = prefs.getString('userId');
+      _cachedEmail = prefs.getString('cachedEmail');
+      _cachedName = prefs.getString('cachedName');
       final savedProfileImg = prefs.getString('profileImageUrl');
       if (savedProfileImg != null && savedProfileImg.isNotEmpty) {
         _profileImageUrl = savedProfileImg;
@@ -123,6 +127,8 @@ class AuthProvider extends ChangeNotifier {
           await prefs.setString('userId', _userId!);
           await prefs.setString('profileImageUrl', '');
           await prefs.setBool('isLoggedIn', true);
+          await prefs.setString('cachedEmail', user.email ?? '');
+          await prefs.setString('cachedName', user.displayName ?? 'Pengguna');
 
           print("Pendaftaran otomatis berhasil via MongoDB! Role: $_role");
         }
