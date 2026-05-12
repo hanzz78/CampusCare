@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../models/tiket_model.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import '../login_screen.dart';
 import '../report_history_screen.dart';
 import '../edit_profile_screen.dart';
@@ -39,13 +38,10 @@ class _ProfileTabState extends State<ProfileTab> {
     final String name = authProvider.displayName ?? email.split('@')[0].toUpperCase();
     final String role = authProvider.role == 'Admin' ? 'Administrator' : 'Mahasiswa';
     
-    // Filter laporan milik user ini saja (untuk daftar laporan yang mungkin tersisa offline)
+    // Filter laporan milik user ini saja
     final userId = authProvider.userId ?? '';
     final myReports = feedProvider.reports.where((r) => r.idUser == userId).toList();
     
-    // Gunakan userReportCount yang sudah dicache untuk mode offline
-    final String pelaporanCount = feedProvider.userReportCount.toString();
-
     return Container(
       color: const Color(0xFF2A5256), // Gunakan brand color Teal
       child: SafeArea(
@@ -54,7 +50,7 @@ class _ProfileTabState extends State<ProfileTab> {
           children: [
             const SizedBox(height: 16),
             // Header: Avatar, Name, Role, Stats
-            _buildHeader(context, name, role, pelaporanCount, feedProvider.userVoteCount.toString()),
+            _buildHeader(name, role, myReports.length.toString(), feedProvider.userVoteCount.toString()),
             const SizedBox(height: 24),
             // Konten Bawah (Lengkungan)
             Expanded(
@@ -63,45 +59,12 @@ class _ProfileTabState extends State<ProfileTab> {
                   color: Color(0xFFF8F3EC), // Cream background matching design
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
-                child: RefreshIndicator(
-                  color: const Color(0xFF3B696D),
-                  onRefresh: () async {
-                    final auth = context.read<AuthProvider>();
-                    if (auth.userId != null) {
-                      await context.read<FeedProvider>().fetchUserStats(auth.userId!);
-                    }
-                    await context.read<FeedProvider>().fetchReports();
-                  },
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ValueListenableBuilder(
-                          valueListenable: Hive.box('offline_reports').listenable(),
-                          builder: (context, Box box, _) {
-                            if (box.isEmpty) return const SizedBox.shrink();
-
-                            final offlineReports = [];
-                            for (int i = 0; i < box.length; i++) {
-                              final data = box.getAt(i);
-                              if (data is Map) {
-                                offlineReports.add(data);
-                              }
-                            }
-
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildSectionTitle('Laporan Offline (Menunggu Sinyal)'),
-                                _buildOfflineReportsCard(offlineReports),
-                                const SizedBox(height: 24),
-                              ],
-                            );
-                          },
-                        ),
-                        InkWell(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      InkWell(
                         onTap: () {
                           Navigator.push(
                             context,
@@ -229,51 +192,36 @@ class _ProfileTabState extends State<ProfileTab> {
                       const SizedBox(height: 80),
                     ],
                   ),
-                ), // SingleChildScrollView
-              ), // RefreshIndicator
-            ), // Container
-          ), // Expanded
+                ),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, String name, String role, String pelaporanCount, String dukunganCount) {
-    final profileImageUrl = context.watch<AuthProvider>().profileImageUrl;
-
+  Widget _buildHeader(String name, String role, String pelaporanCount, String dukunganCount) {
     return Column(
       children: [
         // Avatar
         Container(
           width: 85,
           height: 85,
-          decoration: BoxDecoration(
-            color: Colors.white,
+          decoration: const BoxDecoration(
+            color: Color(0xFFE8ECEC),
             shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))
-            ],
-            border: Border.all(color: Colors.white.withOpacity(0.2), width: 4),
-            image: profileImageUrl != null && profileImageUrl.isNotEmpty
-                ? DecorationImage(
-                    image: NetworkImage(profileImageUrl),
-                    fit: BoxFit.cover,
-                  )
-                : null,
           ),
-          child: profileImageUrl == null || profileImageUrl.isEmpty
-              ? const Center(child: Icon(Icons.person_rounded, size: 50, color: Color(0xFF2A5256)))
-              : null,
+          child: const Center(child: Icon(Icons.person_rounded, size: 50, color: Color(0xFF7A9BA0))),
         ),
         const SizedBox(height: 16),
         Text(
           name,
-          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+          style: const TextStyle(color: Color(0xFFEAE3D9), fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.5),
         ),
         const SizedBox(height: 4),
         Text(
-          'Polban • $role',
+          'Gedung D • $role',
           style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 24),
@@ -282,9 +230,8 @@ class _ProfileTabState extends State<ProfileTab> {
           margin: const EdgeInsets.symmetric(horizontal: 40),
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: const Color(0xFF4A7479),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
           child: IntrinsicHeight(
             child: Row(
@@ -305,9 +252,9 @@ class _ProfileTabState extends State<ProfileTab> {
     return Expanded(
       child: Column(
         children: [
-          Text(count, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
+          Text(count, style: const TextStyle(color: Color(0xFFFFF3B0), fontSize: 20, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -321,10 +268,10 @@ class _ProfileTabState extends State<ProfileTab> {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF7A9BA0)),
           ),
           if (title == 'My Reports')
-            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey, size: 14),
+            const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFF7A9BA0), size: 14),
         ],
       ),
     );
@@ -379,37 +326,6 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  Widget _buildOfflineReportsCard(List<dynamic> reports) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.orange.shade50,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.orange.shade200),
-      ),
-      child: Column(
-        children: reports.asMap().entries.map((entry) {
-          final index = entry.key;
-          final report = entry.value as Map;
-          final isLast = index == reports.length - 1;
-          
-          final kategoriUtama = report['kategori']?['utama'] ?? 'Lainnya';
-          final gedung = report['lokasi']?['gedung'] ?? 'Tidak Diketahui';
-          
-          return Column(
-            children: [
-              _buildReportRow(
-                report['judulSingkat'] ?? 'Tanpa Judul', 
-                '$kategoriUtama • $gedung', 
-                Colors.orange,
-              ),
-              if (!isLast) Divider(height: 1, color: Colors.orange.shade200, indent: 20, endIndent: 20),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-
   Widget _buildReportRow(String title, String subtitle, Color bulletColor) {
     return Padding(
       padding: const EdgeInsets.all(20),
@@ -431,7 +347,6 @@ class _ProfileTabState extends State<ProfileTab> {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20),
         ],
       ),
     );
@@ -456,7 +371,14 @@ class _ProfileTabState extends State<ProfileTab> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         child: Row(
           children: [
-            Icon(icon, size: 22, color: const Color(0xFF2A5256)),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8ECEC),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 20, color: const Color(0xFF2A5256)),
+            ),
             const SizedBox(width: 16),
             Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFF1E293B)))),
             const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFFCBD5E1), size: 14),
