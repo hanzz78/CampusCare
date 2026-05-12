@@ -81,6 +81,19 @@ class MongoService {
     await getCollection('users').insert(userData);
   }
 
+  Future<void> updateUser(String userId, Map<String, dynamic> data) async {
+    await connect();
+    final col = getCollection('users');
+    final objectId = ObjectId.fromHexString(userId);
+    
+    var modifier = modify;
+    data.forEach((key, value) {
+      modifier = modifier.set(key, value);
+    });
+    
+    await col.updateOne(where.eq('_id', objectId), modifier);
+  }
+
   Future<void> close() async {
     if (_db != null) await _db!.close();
   }

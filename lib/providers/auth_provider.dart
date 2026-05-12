@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:mongo_dart/mongo_dart.dart' show ObjectId;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../services/mongo_service.dart';
 
 class AuthProvider extends ChangeNotifier {
@@ -16,12 +18,14 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoggedIn = false;
   String _role = 'user'; // Default role
   String? _userId;
+  String? _profileImageUrl;
 
   // Getters supaya bisa dibaca oleh UI
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _isLoggedIn;
   String get role => _role;
   String? get userId => _userId;
+  String? get profileImageUrl => _profileImageUrl;
   String? get email => _auth.currentUser?.email;
   String? get displayName => _auth.currentUser?.displayName;
 
@@ -32,11 +36,16 @@ class AuthProvider extends ChangeNotifier {
       _isLoggedIn = prefs.getBool('isLoggedIn') ?? false;
       _role = prefs.getString('userRole') ?? 'user';
       _userId = prefs.getString('userId');
+      final savedProfileImg = prefs.getString('profileImageUrl');
+      if (savedProfileImg != null && savedProfileImg.isNotEmpty) {
+        _profileImageUrl = savedProfileImg;
+      }
     } catch (e) {
       debugPrint('checkSession error: $e');
       _isLoggedIn = false;
       _role = 'user';
       _userId = null;
+      _profileImageUrl = null;
     }
     notifyListeners();
   }
@@ -76,12 +85,14 @@ class AuthProvider extends ChangeNotifier {
           // 🎉 USER DITEMUKAN DI MONGODB
           _userId = (userDoc['_id'] as ObjectId).toHexString();
           _role = userDoc['role'] ?? 'User';
+          _profileImageUrl = userDoc['profileImageUrl'];
           _isLoggedIn = true;
           
           // Simpan status di SharedPreferences agar tidak hilang saat restart
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('userRole', _role);
           await prefs.setString('userId', _userId!);
+          if (_profileImageUrl != null) await prefs.setString('profileImageUrl', _profileImageUrl!);
           await prefs.setBool('isLoggedIn', true);
           
           print("Login berhasil via MongoDB! Role: $_role");
@@ -105,10 +116,12 @@ class AuthProvider extends ChangeNotifier {
           _userId = newObjectId.toHexString();
           _isLoggedIn = true; 
           _role = 'User';
+          _profileImageUrl = null;
 
           final prefs = await SharedPreferences.getInstance();
           await prefs.setString('userRole', _role);
           await prefs.setString('userId', _userId!);
+          await prefs.setString('profileImageUrl', '');
           await prefs.setBool('isLoggedIn', true);
 
           print("Pendaftaran otomatis berhasil via MongoDB! Role: $_role");
@@ -180,6 +193,44 @@ class AuthProvider extends ChangeNotifier {
     _isLoggedIn = false;
     _role = 'user';
     _userId = null;
+    _profileImageUrl = null;
     notifyListeners();
+  }
+
+  // Fungsi Baru: Upload Foto Profil
+  Future<void> updateProfileImage(File imageFile) async {
+    if (_userId == null) throw Exception("User ID tidak ditemukan");
+    
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final supabase = Supabase.instance.client;
+      final fileName = 'profile_$_userId-${DateTime.now().millisecondsSinceEpoch}.jpg';
+      
+      // Upload ke bucket profile_image (seperti yang dibuat user)
+      await supabase.storage.from('profile_image').uploadBinary(
+            fileName,
+            await imageFile.readAsBytes(),
+            fileOptions: const FileOptions(contentType: 'image/jpeg'),
+          );
+          
+      final imageUrl = supabase.storage.from('profile_image').getPublicUrl(fileName);
+
+      // Update MongoDB
+      await MongoService().updateUser(_userId!, {'profileImageUrl': imageUrl});
+
+      // Update local state & SharedPreferences
+      _profileImageUrl = imageUrl;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('profileImageUrl', imageUrl);
+
+    } catch (e) {
+      debugPrint("Error updating profile image: $e");
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 }

@@ -51,7 +51,7 @@ class _ProfileTabState extends State<ProfileTab> {
           children: [
             const SizedBox(height: 16),
             // Header: Avatar, Name, Role, Stats
-            _buildHeader(name, role, myReports.length.toString(), feedProvider.userVoteCount.toString()),
+            _buildHeader(context, name, role, myReports.length.toString(), feedProvider.userVoteCount.toString()),
             const SizedBox(height: 24),
             // Konten Bawah (Lengkungan)
             Expanded(
@@ -233,7 +233,9 @@ class _ProfileTabState extends State<ProfileTab> {
     );
   }
 
-  Widget _buildHeader(String name, String role, String pelaporanCount, String dukunganCount) {
+  Widget _buildHeader(BuildContext context, String name, String role, String pelaporanCount, String dukunganCount) {
+    final profileImageUrl = context.watch<AuthProvider>().profileImageUrl;
+
     return Column(
       children: [
         // Avatar
@@ -247,8 +249,16 @@ class _ProfileTabState extends State<ProfileTab> {
               BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))
             ],
             border: Border.all(color: Colors.white.withOpacity(0.2), width: 4),
+            image: profileImageUrl != null && profileImageUrl.isNotEmpty
+                ? DecorationImage(
+                    image: NetworkImage(profileImageUrl),
+                    fit: BoxFit.cover,
+                  )
+                : null,
           ),
-          child: const Center(child: Icon(Icons.person_rounded, size: 50, color: Color(0xFF2A5256))),
+          child: profileImageUrl == null || profileImageUrl.isEmpty
+              ? const Center(child: Icon(Icons.person_rounded, size: 50, color: Color(0xFF2A5256)))
+              : null,
         ),
         const SizedBox(height: 16),
         Text(
