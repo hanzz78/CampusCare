@@ -351,7 +351,6 @@ class _ProfileTabState extends State<ProfileTab> {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20),
         ],
       ),
     );

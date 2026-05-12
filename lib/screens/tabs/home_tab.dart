@@ -5,6 +5,7 @@ import '../../providers/feed_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/tiket_model.dart';
 import '../report_detail_screen.dart';
+import '../report_history_screen.dart';
 import '../../widgets/report_card.dart';
 
 class HomeTab extends StatefulWidget {
@@ -43,7 +44,8 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   List<TiketModel> _applyFilters(List<TiketModel> reports) {
-    var result = List<TiketModel>.from(reports);
+    // Hanya tampilkan laporan yang masih "Menunggu Verifikasi" di halaman utama
+    var result = reports.where((r) => r.status == 'Menunggu Verifikasi').toList();
 
     if (_activeCategory == 'Sarana Prasarana') {
       result = result
@@ -506,7 +508,7 @@ class _HomeTabState extends State<HomeTab> {
                       )
                     else
                       ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 210),
+                        constraints: const BoxConstraints(maxHeight: 175),
                         child: ListView.separated(
                           primary: false,
                           padding: EdgeInsets.zero,
@@ -528,8 +530,12 @@ class _HomeTabState extends State<HomeTab> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) =>
-                                        ReportDetailScreen(report: item.report),
+                                    builder: (_) {
+                                      if (item.key.startsWith('approved-') || item.key.startsWith('rejected-')) {
+                                        return const ReportHistoryScreen();
+                                      }
+                                      return ReportDetailScreen(report: item.report);
+                                    },
                                   ),
                                 );
                               },
