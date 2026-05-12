@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/tiket_model.dart';
@@ -19,6 +20,27 @@ class _HomeTabState extends State<HomeTab> {
   String _selectedMinDukungan = 'Semua';
   bool _showNotifications = false;
   final Set<String> _readNotificationKeys = <String>{};
+
+  static const String _prefKey = 'read_notification_keys';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReadKeys();
+  }
+
+  Future<void> _loadReadKeys() async {
+    final prefs = await SharedPreferences.getInstance();
+    final saved = prefs.getStringList(_prefKey) ?? [];
+    setState(() {
+      _readNotificationKeys.addAll(saved);
+    });
+  }
+
+  Future<void> _saveReadKeys() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(_prefKey, _readNotificationKeys.toList());
+  }
 
   List<TiketModel> _applyFilters(List<TiketModel> reports) {
     var result = List<TiketModel>.from(reports);
@@ -455,6 +477,7 @@ class _HomeTabState extends State<HomeTab> {
                                         notifications.map((n) => n.key),
                                       );
                                     });
+                                    _saveReadKeys();
                                   },
                             child: Text(
                               'Mark all read',
@@ -501,6 +524,7 @@ class _HomeTabState extends State<HomeTab> {
                                   _readNotificationKeys.add(item.key);
                                   _showNotifications = false;
                                 });
+                                _saveReadKeys();
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
