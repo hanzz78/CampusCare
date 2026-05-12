@@ -12,7 +12,20 @@ class MongoService {
 
   Future<void> connect() async {
     if (_db != null && _db!.state == State.OPEN) {
-      return;
+      if (_db!.isConnected) {
+        try {
+          // Lakukan ping untuk memastikan koneksi masih aktif
+          await _db!.pingCommand();
+          return;
+        } catch (e) {
+          if (kDebugMode) print("Stale MongoDB connection. Reconnecting...");
+          try { await _db!.close(); } catch (_) {}
+          _db = null;
+        }
+      } else {
+        try { await _db!.close(); } catch (_) {}
+        _db = null;
+      }
     }
 
     int retryCount = 0;

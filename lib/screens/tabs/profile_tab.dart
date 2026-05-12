@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../models/tiket_model.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../login_screen.dart';
 import '../report_history_screen.dart';
 import '../edit_profile_screen.dart';
@@ -59,11 +60,44 @@ class _ProfileTabState extends State<ProfileTab> {
                   color: Color(0xFFF8FAFC), // Cleaner background
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+                child: RefreshIndicator(
+                  color: const Color(0xFF3B696D),
+                  onRefresh: () async {
+                    final auth = context.read<AuthProvider>();
+                    if (auth.userId != null) {
+                      await context.read<FeedProvider>().fetchUserStats(auth.userId!);
+                    }
+                    await context.read<FeedProvider>().fetchReports();
+                  },
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      ValueListenableBuilder(
+                        valueListenable: Hive.box('offline_reports').listenable(),
+                        builder: (context, Box box, _) {
+                          if (box.isEmpty) return const SizedBox.shrink();
+
+                          final offlineReports = [];
+                          for (int i = 0; i < box.length; i++) {
+                            final data = box.getAt(i);
+                            if (data is Map) {
+                              offlineReports.add(data);
+                            }
+                          }
+
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildSectionTitle('Laporan Offline (Menunggu Sinyal)'),
+                              _buildOfflineReportsCard(offlineReports),
+                              const SizedBox(height: 24),
+                            ],
+                          );
+                        },
+                      ),
                       InkWell(
                         onTap: () {
                           Navigator.push(
@@ -189,9 +223,10 @@ class _ProfileTabState extends State<ProfileTab> {
                       const SizedBox(height: 80),
                     ],
                   ),
-                ),
-              ),
-            ),
+                ), // SingleChildScrollView
+              ), // RefreshIndicator
+            ), // Container
+          ), // Expanded
           ],
         ),
       ),
@@ -323,6 +358,37 @@ class _ProfileTabState extends State<ProfileTab> {
                 report.kategori.utama == 'Sarpras' ? const Color(0xFF2A5256) : const Color(0xFFE69B3A)
               ),
               if (!isLast) Divider(height: 1, color: Colors.grey.shade100, indent: 20, endIndent: 20),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildOfflineReportsCard(List<dynamic> reports) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.orange.shade200),
+      ),
+      child: Column(
+        children: reports.asMap().entries.map((entry) {
+          final index = entry.key;
+          final report = entry.value as Map;
+          final isLast = index == reports.length - 1;
+          
+          final kategoriUtama = report['kategori']?['utama'] ?? 'Lainnya';
+          final gedung = report['lokasi']?['gedung'] ?? 'Tidak Diketahui';
+          
+          return Column(
+            children: [
+              _buildReportRow(
+                report['judulSingkat'] ?? 'Tanpa Judul', 
+                '$kategoriUtama • $gedung', 
+                Colors.orange,
+              ),
+              if (!isLast) Divider(height: 1, color: Colors.orange.shade200, indent: 20, endIndent: 20),
             ],
           );
         }).toList(),
