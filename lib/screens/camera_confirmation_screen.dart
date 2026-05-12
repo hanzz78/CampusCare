@@ -12,14 +12,14 @@ class CameraConfirmationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF1E293B),
       body: SafeArea(
         child: Column(
           children: [
             // Top Bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-              color: Colors.black,
+              color: const Color(0xFF1E293B),
               child: Row(
                 children: [
                   const Text(
@@ -43,7 +43,7 @@ class CameraConfirmationScreen extends StatelessWidget {
             Expanded(
               child: Container(
                 width: double.infinity,
-                color: Colors.black,
+                color: const Color(0xFF1E293B),
                 child: Image.file(
                   File(imagePath),
                   fit: BoxFit.contain,
@@ -54,7 +54,7 @@ class CameraConfirmationScreen extends StatelessWidget {
             // Bottom Action Bar
             Container(
               padding: const EdgeInsets.all(24.0),
-              color: Colors.black,
+              color: const Color(0xFF1E293B),
               child: Row(
                 children: [
                   // Retake Button
@@ -88,7 +88,7 @@ class CameraConfirmationScreen extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF3B696D), // Teal gelap
+                        backgroundColor: const Color(0xFF2A5256), // Teal gelap
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),

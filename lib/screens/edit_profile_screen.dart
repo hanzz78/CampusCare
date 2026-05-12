@@ -121,7 +121,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             const SizedBox(height: 16),
 
             _buildFormSection(
-              label: 'Lokasi Kampus',
+              label: 'Lokasi Gedung',
               controller: _locationController,
               icon: Icons.location_on,
               hint: 'Pilih lokasi kampus',

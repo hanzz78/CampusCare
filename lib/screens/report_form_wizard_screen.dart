@@ -19,6 +19,7 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
   int _currentStep = 0;
   final int _totalSteps = 4;
   bool _isSubmitting = false;
+  bool _agreeToTerms = false;
 
   @override
   void dispose() {
@@ -83,87 +84,58 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
         return true; // Boleh pop jika di langkah 1
       },
       child: Scaffold(
-        backgroundColor: const Color(0xFF3B696D), // Teal gelap untuk latar atas
+        backgroundColor: const Color(0xFF2A5256), // Teal gelap untuk latar atas
         body: SafeArea(
           bottom: false,
           child: Column(
             children: [
               // Header
               Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 16.0,
-                ),
+                padding: const EdgeInsets.fromLTRB(24.0, 24.0, 24.0, 16.0),
                 child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    CircleAvatar(
-                      backgroundColor: Colors.white,
-                      radius: 20,
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.arrow_back,
-                          color: Color(0xFF3B696D),
+                    Row(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white.withOpacity(0.5), width: 1),
+                          ),
+                          child: CircleAvatar(
+                            backgroundColor: Colors.transparent,
+                            radius: 18,
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: const Icon(
+                                Icons.arrow_back,
+                                color: Colors.white,
+                                size: 20,
+                              ),
+                              onPressed: _prevStep,
+                            ),
+                          ),
                         ),
-                        onPressed: _prevStep,
-                      ),
+                        const SizedBox(width: 16),
+                        const Text(
+                          'Form Pelaporan',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    const Text(
-                      'Laporan Baru',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
+                    Text(
+                      '${_currentStep + 1}/$_totalSteps',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                   ],
-                ),
-              ),
-
-              // Step Indicator
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32.0,
-                  vertical: 8.0,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(_totalSteps, (index) {
-                    final isActive = index <= _currentStep;
-                    return Expanded(
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 24,
-                            height: 24,
-                            decoration: BoxDecoration(
-                              color: isActive ? Colors.white : Colors.white24,
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(
-                              child: Text(
-                                '${index + 1}',
-                                style: TextStyle(
-                                  color: isActive
-                                      ? const Color(0xFF3B696D)
-                                      : Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ),
-                          if (index < _totalSteps - 1)
-                            Expanded(
-                              child: Container(
-                                height: 2,
-                                color: isActive ? Colors.white : Colors.white24,
-                              ),
-                            ),
-                        ],
-                      ),
-                    );
-                  }),
                 ),
               ),
               const SizedBox(height: 16),
@@ -172,7 +144,7 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
               Expanded(
                 child: Container(
                   decoration: const BoxDecoration(
-                    color: Colors.white,
+                    color: Color(0xFFF8F3EC),
                     borderRadius: BorderRadius.vertical(
                       top: Radius.circular(32),
                     ),
@@ -197,103 +169,124 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                       // Bottom Navigation Button
                       Padding(
                         padding: const EdgeInsets.all(24.0),
-                        child: SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: ElevatedButton(
-                            onPressed: _isSubmitting
-                                ? null
-                                : () async {
-                                    if (_currentStep == _totalSteps - 1) {
-                                      // Submit Report
-                                      setState(() {
-                                        _isSubmitting = true;
-                                      });
-                                      try {
-                                        final authProvider = context
-                                            .read<AuthProvider>();
-                                        final formProvider = context
-                                            .read<ReportFormProvider>();
+                        child: Align(
+                          alignment: _currentStep == _totalSteps - 1 ? Alignment.center : Alignment.centerRight,
+                          child: SizedBox(
+                            width: _currentStep == _totalSteps - 1 ? double.infinity : 150,
+                            height: 50,
+                            child: ElevatedButton(
+                              onPressed: (_isSubmitting || (_currentStep == _totalSteps - 1 && (context.watch<ReportFormProvider>().deskripsi.trim().isEmpty || !_agreeToTerms)))
+                                  ? null
+                                  : () async {
+                                      if (_currentStep == _totalSteps - 1) {
+                                        // Submit Report
+                                        setState(() {
+                                          _isSubmitting = true;
+                                        });
+                                        try {
+                                          final authProvider = context
+                                              .read<AuthProvider>();
+                                          final formProvider = context
+                                              .read<ReportFormProvider>();
 
-                                        final email =
-                                            authProvider.email ??
-                                            'mahasiswa@polban.ac.id';
-                                        final userId =
-                                            authProvider.userId ??
-                                            '6672a1b4f3c3c3c3c3c3c3c1'; // Fallback aman
+                                          final email =
+                                              authProvider.email ??
+                                              'mahasiswa@polban.ac.id';
+                                          final userId =
+                                              authProvider.userId ??
+                                              '6672a1b4f3c3c3c3c3c3c3c1'; // Fallback aman
 
-                                        await formProvider.submitReport(
-                                          email,
-                                          userId,
-                                        );
+                                          await formProvider.submitReport(
+                                            email,
+                                            userId,
+                                          );
 
-                                        // Segarkan Beranda
-                                        context
-                                            .read<FeedProvider>()
-                                            .fetchReports();
+                                          // Segarkan Beranda
+                                          context
+                                              .read<FeedProvider>()
+                                              .fetchReports();
 
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          const SnackBar(
-                                            content: Text(
-                                              'Laporan Berhasil Diunggah!',
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                'Laporan Berhasil Diunggah!',
+                                              ),
                                             ),
-                                          ),
-                                        );
-                                        formProvider.resetForm();
-                                        Navigator.pop(context);
-                                      } catch (e) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              'Gagal mengirim laporan: $e',
+                                          );
+                                          formProvider.resetForm();
+                                          Navigator.pop(context);
+                                        } catch (e) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Gagal mengirim laporan: $e',
+                                              ),
                                             ),
-                                          ),
-                                        );
-                                      } finally {
-                                        if (mounted) {
-                                          setState(() {
-                                            _isSubmitting = false;
-                                          });
+                                          );
+                                        } finally {
+                                          if (mounted) {
+                                            setState(() {
+                                              _isSubmitting = false;
+                                            });
+                                          }
                                         }
+                                      } else {
+                                        _nextStep();
                                       }
-                                    } else {
-                                      _nextStep();
-                                    }
-                                  },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: _currentStep == _totalSteps - 1
-                                  ? const Color(0xFFA03232)
-                                  : const Color(
-                                      0xFF3B696D,
-                                    ), // Merah untuk akhir
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              elevation: 0,
-                            ),
-                            child: _isSubmitting
-                                ? const SizedBox(
-                                    width: 24,
-                                    height: 24,
-                                    child: CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : Text(
-                                    _currentStep == _totalSteps - 1
-                                        ? 'Unggah Pelaporan'
-                                        : 'Selanjutnya',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      color: Colors.white,
-                                    ),
+                                    },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _currentStep == _totalSteps - 1
+                                    ? const Color(0xFFA03232)
+                                    : Colors.white, // Merah untuk akhir
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                  side: BorderSide(
+                                    color: _currentStep == _totalSteps - 1
+                                        ? Colors.transparent
+                                        : const Color(0xFF5A7184),
+                                    width: 1,
                                   ),
+                                ),
+                                elevation: 0,
+                              ),
+                              child: _isSubmitting
+                                  ? const SizedBox(
+                                      width: 24,
+                                      height: 24,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : _currentStep == _totalSteps - 1
+                                    ? const Text(
+                                        'Unggah Pelaporan',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      )
+                                    : Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: const [
+                                          Text(
+                                            'Selanjutnya',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.bold,
+                                              color: Color(0xFF5A7184),
+                                            ),
+                                          ),
+                                          SizedBox(width: 8),
+                                          Icon(Icons.arrow_forward, size: 16, color: Color(0xFF5A7184)),
+                                        ],
+                                      ),
+                            ),
                           ),
                         ),
                       ),
@@ -346,16 +339,13 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: hasImage
-                        ? const Color(0xFF3B696D)
-                        : Colors.grey.shade300,
-                    width: 2,
-                    style: BorderStyle.solid,
+                    color: Colors.grey.shade300,
+                    width: 1,
                   ),
                 ),
                 child: hasImage
                     ? ClipRRect(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(15),
                         child: Image.file(
                           File(provider.imagePath!),
                           fit: BoxFit.cover,
@@ -382,29 +372,64 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 16),
-          // Buka Kamera Device
-          SizedBox(
-            width: double.infinity,
-            child: OutlinedButton.icon(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const CameraScreen()),
-                );
-              },
-              icon: const Icon(Icons.camera),
-              label: const Text('Buka Kamera'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF3B696D),
-                side: const BorderSide(color: Color(0xFF3B696D)),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          if (hasImage) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (_) => const CameraScreen()));
+                    },
+                    icon: const Icon(Icons.edit, size: 18),
+                    label: const Text('Foto Ulang'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF5A7184),
+                      side: BorderSide(color: Colors.grey.shade300),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final picker = ImagePicker();
+                      final image = await picker.pickImage(source: ImageSource.gallery);
+                      if (image != null) provider.setImagePath(image.path);
+                    },
+                    icon: const Icon(Icons.image, size: 18),
+                    label: const Text('Gallery'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF5A7184),
+                      side: BorderSide(color: Colors.grey.shade300),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            const SizedBox(height: 16),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => const CameraScreen()));
+                },
+                icon: const Icon(Icons.camera_alt, size: 18),
+                label: const Text('Buka Kamera'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF5A7184),
+                  side: BorderSide(color: Colors.grey.shade300),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
@@ -477,6 +502,9 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
       'Gedung C',
       'Gedung D',
       'Gedung E',
+      'Gedung F',
+      'Gedung G',
+      'Gedung H',
       'Masjid',
       'Perpustakaan',
     ];
@@ -496,7 +524,7 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
           ),
           const SizedBox(height: 16),
           Wrap(
-            spacing: 12,
+            spacing: 8,
             runSpacing: 12,
             children: buildings.map((gedung) {
               final isActive = provider.gedung == gedung;
@@ -505,24 +533,25 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
-                    vertical: 10,
+                    vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: isActive ? const Color(0xFF3B696D) : Colors.white,
+                    color: isActive ? const Color(0xFF2A5256) : Colors.white,
                     border: Border.all(
                       color: isActive
-                          ? const Color(0xFF3B696D)
+                          ? const Color(0xFF2A5256)
                           : Colors.grey.shade300,
                     ),
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     gedung,
                     style: TextStyle(
-                      color: isActive ? Colors.white : Colors.grey.shade600,
+                      color: isActive ? Colors.white : const Color(0xFF5A7184),
                       fontWeight: isActive
                           ? FontWeight.bold
-                          : FontWeight.normal,
+                          : FontWeight.w500,
+                      fontSize: 13,
                     ),
                   ),
                 ),
@@ -543,17 +572,23 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
             initialValue: provider.deskripsiLokasi,
             onChanged: (val) => provider.setDeskripsiLokasi(val),
             maxLines: 4,
+            style: const TextStyle(color: Color(0xFF1E293B)),
             decoration: InputDecoration(
-              hintText: 'Contoh: Ruang kelas 204 dekat pintu utama',
+              hintText: 'Contoh: Lantai 2 ruang kelas 203',
+              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
               border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey.shade300),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: Color(0xFF3B696D),
-                  width: 2,
+                  color: Color(0xFF2A5256),
+                  width: 1.5,
                 ),
               ),
               filled: true,
@@ -600,6 +635,9 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
           Row(
             children: categories.map((cat) {
               final isActive = provider.kategoriUtama == cat['name'];
+              final bool isSarpras = cat['name'] == 'Sarana Prasarana';
+              final activeColor = isSarpras ? const Color(0xFF2A5256) : const Color(0xFFE09F3E);
+              
               return Expanded(
                 child: GestureDetector(
                   onTap: () => provider.setKategoriUtama(cat['name'] as String),
@@ -608,40 +646,28 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                       right: cat == categories.first ? 12 : 0,
                       left: cat == categories.last ? 12 : 0,
                     ),
-                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                     decoration: BoxDecoration(
-                      color: isActive ? Colors.grey.shade200 : Colors.white,
+                      color: isActive ? activeColor : Colors.white,
                       border: Border.all(
                         color: isActive
-                            ? const Color(0xFF3B696D)
+                            ? activeColor
                             : Colors.grey.shade300,
-                        width: isActive ? 2 : 1,
+                        width: 1,
                       ),
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(24),
                     ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          cat['icon'] as IconData,
-                          size: 32,
-                          color: isActive
-                              ? const Color(0xFF3B696D)
-                              : Colors.grey.shade400,
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          cat['name'] as String,
-                          style: TextStyle(
-                            color: isActive
-                                ? const Color(0xFF3B696D)
-                                : Colors.grey.shade500,
-                            fontWeight: isActive
-                                ? FontWeight.bold
-                                : FontWeight.normal,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
+                    child: Text(
+                      cat['name'] as String,
+                      style: TextStyle(
+                        color: isActive
+                            ? (isSarpras ? Colors.white : const Color(0xFF2A5256))
+                            : const Color(0xFF5A7184),
+                        fontWeight: isActive
+                            ? FontWeight.bold
+                            : FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
                     ),
                   ),
                 ),
@@ -660,7 +686,7 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
             ),
             const SizedBox(height: 16),
             Wrap(
-              spacing: 12,
+              spacing: 8,
               runSpacing: 12,
               children:
                   (provider.kategoriUtama == 'Sarana Prasarana'
@@ -673,28 +699,29 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                           child: Container(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16,
-                              vertical: 10,
+                              vertical: 8,
                             ),
                             decoration: BoxDecoration(
                               color: isActive
-                                  ? const Color(0xFF3B696D)
+                                  ? const Color(0xFF2A5256)
                                   : Colors.white,
                               border: Border.all(
                                 color: isActive
-                                    ? const Color(0xFF3B696D)
+                                    ? const Color(0xFF2A5256)
                                     : Colors.grey.shade300,
                               ),
-                              borderRadius: BorderRadius.circular(24),
+                              borderRadius: BorderRadius.circular(20),
                             ),
                             child: Text(
                               type,
                               style: TextStyle(
                                 color: isActive
                                     ? Colors.white
-                                    : Colors.grey.shade600,
+                                    : const Color(0xFF5A7184),
                                 fontWeight: isActive
                                     ? FontWeight.bold
-                                    : FontWeight.normal,
+                                    : FontWeight.w500,
+                                fontSize: 13,
                               ),
                             ),
                           ),
@@ -718,13 +745,14 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
               children: titleOptions.map((title) {
                 final isSelected = provider.judul == title;
                 return Card(
-                  color: isSelected ? const Color(0xFF3B696D) : Colors.white,
+                  color: isSelected ? const Color(0xFF2A5256) : Colors.white,
                   margin: const EdgeInsets.only(bottom: 12),
+                  elevation: 0,
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(12),
                     side: BorderSide(
                       color: isSelected
-                          ? const Color(0xFF3B696D)
+                          ? const Color(0xFF2A5256)
                           : Colors.grey.shade300,
                     ),
                   ),
@@ -732,7 +760,8 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                     title: Text(
                       title,
                       style: TextStyle(
-                        color: isSelected ? Colors.white : Colors.black87,
+                        color: isSelected ? Colors.white : const Color(0xFF1E293B),
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                       ),
                     ),
                     trailing: isSelected
@@ -777,36 +806,53 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF3B696D),
+              color: Color(0xFF2A5256),
             ),
           ),
           const SizedBox(height: 24),
-          if (provider.imagePath != null)
-            ClipRRect(
-              borderRadius: BorderRadius.circular(16),
-              child: Image.file(
-                File(provider.imagePath!),
-                height: 200,
-                width: double.infinity,
-                fit: BoxFit.cover,
-              ),
-            ),
-          const SizedBox(height: 24),
-          _buildReviewRow('Kategori', provider.kategoriUtama ?? '-'),
-          const Divider(),
-          _buildReviewRow('Subkategori', provider.kategoriJenis ?? '-'),
-          const Divider(),
-          _buildReviewRow('Lokasi', provider.gedung ?? '-'),
-          if (provider.deskripsiLokasi.isNotEmpty) ...[
-            const Divider(),
-            _buildReviewRow('Keterangan Tempat', provider.deskripsiLokasi),
-          ],
-          const Divider(),
-          _buildReviewRow(
-            'Judul',
-            provider.judul.isNotEmpty ? provider.judul : '-',
+          _buildReviewCard(
+            title: 'Bukti Laporan',
+            stepIndex: 0,
+            content: provider.imagePath != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.file(
+                      File(provider.imagePath!),
+                      height: 150,
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : const Text('Belum ada foto', style: TextStyle(color: Color(0xFF5A7184))),
           ),
-          const SizedBox(height: 24),
+          _buildReviewCard(
+            title: 'Lokasi Laporan',
+            stepIndex: 1,
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(provider.gedung ?? '-', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+                if (provider.deskripsiLokasi.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  const Text('Detail Lokasi:', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                  Text(provider.deskripsiLokasi, style: const TextStyle(color: Color(0xFF5A7184))),
+                ]
+              ],
+            ),
+          ),
+          _buildReviewCard(
+            title: 'Kategori & Judul',
+            stepIndex: 2,
+            content: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('${provider.kategoriUtama ?? '-'} > ${provider.kategoriJenis ?? '-'}', style: const TextStyle(color: Color(0xFF5A7184))),
+                const SizedBox(height: 8),
+                Text(provider.judul.isNotEmpty ? provider.judul : '-', style: const TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1E293B))),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
           const Text(
             'Deskripsi Masalah',
             style: TextStyle(
@@ -819,22 +865,76 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
           TextFormField(
             initialValue: provider.deskripsi,
             onChanged: (val) => provider.setDeskripsi(val),
-            maxLines: 6,
+            maxLines: 4,
+            style: const TextStyle(color: Color(0xFF1E293B)),
             decoration: InputDecoration(
-              hintText: 'Tuliskan deskripsi detail masalah, wajib diisi',
+              hintText: 'Contoh: AC bocor udah 2 hari...',
+              hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
               border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
+              enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: BorderSide(color: Colors.grey.shade300),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide: const BorderSide(
-                  color: Color(0xFF3B696D),
-                  width: 2,
+                  color: Color(0xFF2A5256),
+                  width: 1.5,
                 ),
               ),
               filled: true,
               fillColor: Colors.white,
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Pernyataan
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey.shade300),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Pernyataan',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF5A7184),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Laporan yang saya buat benar dan dapat dipertanggungjawabkan',
+                  style: TextStyle(color: Color(0xFF1E293B), fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    SizedBox(
+                      height: 24,
+                      width: 24,
+                      child: Checkbox(
+                        value: _agreeToTerms,
+                        activeColor: const Color(0xFF2A5256),
+                        onChanged: (val) {
+                          setState(() {
+                            _agreeToTerms = val ?? false;
+                          });
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    const Text('Ya, saya setuju', style: TextStyle(color: Color(0xFF5A7184), fontWeight: FontWeight.w600)),
+                  ],
+                ),
+              ],
             ),
           ),
         ],
@@ -842,31 +942,53 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
     );
   }
 
-  Widget _buildReviewRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
+  Widget _buildReviewCard({required String title, required int stepIndex, required Widget content}) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          SizedBox(
-            width: 100,
-            child: Text(
-              label,
-              style: const TextStyle(
-                color: Colors.grey,
-                fontWeight: FontWeight.w500,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF5A7184),
+                ),
               ),
-            ),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.black87,
+              GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _currentStep = stepIndex;
+                  });
+                  _pageController.animateToPage(
+                    stepIndex,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  );
+                },
+                child: const Text(
+                  'Ganti',
+                  style: TextStyle(
+                    color: Color(0xFF2A5256),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
+          const SizedBox(height: 12),
+          content,
         ],
       ),
     );

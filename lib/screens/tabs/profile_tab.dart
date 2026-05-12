@@ -56,7 +56,7 @@ class _ProfileTabState extends State<ProfileTab> {
             Expanded(
               child: Container(
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF8FAFC), // Cleaner background
+                  color: Color(0xFFF8F3EC), // Cream background matching design
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
                 child: SingleChildScrollView(
@@ -176,13 +176,16 @@ class _ProfileTabState extends State<ProfileTab> {
                             );
                           },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.shade50,
+                            backgroundColor: const Color(0xFFDFB6B2),
                             elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              side: const BorderSide(color: Color(0xFFC79E9A), width: 1),
+                            ),
                           ),
-                          child: Text(
+                          child: const Text(
                             'Sign Out',
-                            style: TextStyle(color: Colors.red.shade700, fontSize: 16, fontWeight: FontWeight.bold),
+                            style: TextStyle(color: Color(0xFF9E2A2B), fontSize: 16, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ),
@@ -205,24 +208,20 @@ class _ProfileTabState extends State<ProfileTab> {
         Container(
           width: 85,
           height: 85,
-          decoration: BoxDecoration(
-            color: Colors.white,
+          decoration: const BoxDecoration(
+            color: Color(0xFFE8ECEC),
             shape: BoxShape.circle,
-            boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))
-            ],
-            border: Border.all(color: Colors.white.withOpacity(0.2), width: 4),
           ),
-          child: const Center(child: Icon(Icons.person_rounded, size: 50, color: Color(0xFF2A5256))),
+          child: const Center(child: Icon(Icons.person_rounded, size: 50, color: Color(0xFF7A9BA0))),
         ),
         const SizedBox(height: 16),
         Text(
           name,
-          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+          style: const TextStyle(color: Color(0xFFEAE3D9), fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.5),
         ),
         const SizedBox(height: 4),
         Text(
-          'Polban • $role',
+          'Gedung D • $role',
           style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
         ),
         const SizedBox(height: 24),
@@ -231,9 +230,8 @@ class _ProfileTabState extends State<ProfileTab> {
           margin: const EdgeInsets.symmetric(horizontal: 40),
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.1),
+            color: const Color(0xFF4A7479),
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.white.withOpacity(0.1)),
           ),
           child: IntrinsicHeight(
             child: Row(
@@ -254,9 +252,9 @@ class _ProfileTabState extends State<ProfileTab> {
     return Expanded(
       child: Column(
         children: [
-          Text(count, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
+          Text(count, style: const TextStyle(color: Color(0xFFFFF3B0), fontSize: 20, fontWeight: FontWeight.w900)),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(label, style: const TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -270,10 +268,10 @@ class _ProfileTabState extends State<ProfileTab> {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF7A9BA0)),
           ),
           if (title == 'My Reports')
-            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey, size: 14),
+            const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFF7A9BA0), size: 14),
         ],
       ),
     );
@@ -305,9 +303,7 @@ class _ProfileTabState extends State<ProfileTab> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
-        ],
+        border: Border.all(color: const Color(0xFFD0D7D8)),
       ),
       child: Column(
         children: displayReports.asMap().entries.map((entry) {
@@ -361,9 +357,7 @@ class _ProfileTabState extends State<ProfileTab> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
-        ],
+        border: Border.all(color: const Color(0xFFD0D7D8)),
       ),
       child: Column(children: children),
     );
@@ -377,7 +371,14 @@ class _ProfileTabState extends State<ProfileTab> {
         padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
         child: Row(
           children: [
-            Icon(icon, size: 22, color: const Color(0xFF2A5256)),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8ECEC),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 20, color: const Color(0xFF2A5256)),
+            ),
             const SizedBox(width: 16),
             Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFF1E293B)))),
             const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFFCBD5E1), size: 14),

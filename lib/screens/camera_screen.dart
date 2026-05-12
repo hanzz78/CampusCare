@@ -88,14 +88,14 @@ class _CameraScreenState extends State<CameraScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: const Color(0xFF1E293B),
       body: SafeArea(
         child: Column(
           children: [
             // Top Bar
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-              color: Colors.black,
+              color: const Color(0xFF1E293B),
               child: Row(
                 children: [
                   Column(
@@ -104,8 +104,8 @@ class _CameraScreenState extends State<CameraScreen> {
                       RichText(
                         text: const TextSpan(
                           children: [
-                            TextSpan(text: 'Campus', style: TextStyle(color: Color(0xFFF39C12), fontSize: 24, fontWeight: FontWeight.bold)),
-                            TextSpan(text: 'Care', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
+                            TextSpan(text: 'Campus', style: TextStyle(color: Color(0xFF9E2A2B), fontSize: 24, fontWeight: FontWeight.bold)),
+                            TextSpan(text: 'Care', style: TextStyle(color: Color(0xFFE09F3E), fontSize: 24, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
@@ -114,7 +114,7 @@ class _CameraScreenState extends State<CameraScreen> {
                         backgroundColor: Colors.white,
                         radius: 20,
                         child: IconButton(
-                          icon: const Icon(Icons.arrow_back, color: Colors.black),
+                          icon: const Icon(Icons.arrow_back, color: Color(0xFF2A5256)),
                           onPressed: () => Navigator.pop(context),
                         ),
                       ),
@@ -137,7 +137,7 @@ class _CameraScreenState extends State<CameraScreen> {
             // Bottom Bar
             Container(
               padding: const EdgeInsets.symmetric(vertical: 24.0),
-              color: Colors.black,
+              color: const Color(0xFF1E293B),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -187,7 +187,7 @@ class _CameraScreenState extends State<CameraScreen> {
         height: size,
         width: size,
         decoration: BoxDecoration(
-          color: const Color(0xFF3B696D), // Teal gelap
+          color: const Color(0xFF2A5256), // Teal gelap yang sama dengan homepage
           shape: BoxShape.circle,
           border: Border.all(color: Colors.grey.shade400, width: borderWidth),
         ),
