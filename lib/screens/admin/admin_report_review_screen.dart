@@ -3,6 +3,9 @@ import '../../models/tiket_model.dart';
 import 'package:provider/provider.dart';
 import '../../providers/admin_dashboard_provider.dart';
 import 'package:intl/intl.dart';
+import 'package:pdf/pdf.dart';
+import 'package:printing/printing.dart';
+import '../../services/pdf_service.dart';
 
 class AdminReportReviewScreen extends StatefulWidget {
   final TiketModel report;
@@ -48,6 +51,14 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
         backgroundColor: const Color(0xFF3B696D),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          if (isApproved)
+            IconButton(
+              icon: const Icon(Icons.print),
+              tooltip: 'Cetak Dokumen',
+              onPressed: () => _printPdf(currentReport),
+            ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
@@ -438,5 +449,21 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
     if (duration.inDays > 0) return '${duration.inDays} hari lalu';
     if (duration.inHours > 0) return '${duration.inHours} jam lalu';
     return '${duration.inMinutes} menit lalu';
+  }
+
+  Future<void> _printPdf(TiketModel report) async {
+    try {
+      final pdfBytes = await PdfService.generateReportPdf(report);
+      await Printing.layoutPdf(
+        onLayout: (PdfPageFormat format) async => pdfBytes,
+        name: 'Laporan_${report.idTiket}.pdf',
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal membuat dokumen PDF: $e'), backgroundColor: Colors.red),
+        );
+      }
+    }
   }
 }
