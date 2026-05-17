@@ -194,7 +194,12 @@ class AuthProvider extends ChangeNotifier {
     }
     
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await prefs.remove('isLoggedIn');
+    await prefs.remove('userRole');
+    await prefs.remove('userId');
+    await prefs.remove('profileImageUrl');
+    await prefs.remove('cachedEmail');
+    await prefs.remove('cachedName');
     
     _isLoggedIn = false;
     _role = 'user';

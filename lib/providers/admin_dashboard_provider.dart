@@ -7,16 +7,17 @@ class AdminDashboardProvider extends ChangeNotifier {
   bool _isLoading = false;
   List<TiketModel> _reports = [];
   String? _errorMessage;
-  
+
   bool get isLoading => _isLoading;
   List<TiketModel> get reports => _reports;
   String? get errorMessage => _errorMessage;
 
-  String _selectedCategoryFilter = 'Semua'; 
+  String _selectedCategoryFilter = 'Semua';
   String _selectedSort = 'Waktu Terbaru';
-  
+
   // New States for Action Segmentation
-  String _adminActionTab = 'Menunggu Tindakan'; // 'Menunggu Tindakan' or 'Selesai Direview'
+  String _adminActionTab =
+      'Menunggu Tindakan'; // 'Menunggu Tindakan' or 'Selesai Direview'
   String _adminStatusFilter = 'Semua'; // 'Semua', 'Disetujui', 'Ditolak'
 
   String get selectedCategoryFilter => _selectedCategoryFilter;
@@ -47,10 +48,19 @@ class AdminDashboardProvider extends ChangeNotifier {
     _adminStatusFilter = status;
     notifyListeners();
   }
+
   int get totalLaporan => _reports.length;
-  int get belumDireview => _reports.where((t) => t.status == 'Menunggu Verifikasi').length;
-  int get selesai => _reports.where((t) => t.status == 'Approved' || t.status == 'Rejected' || t.status == 'Documented').length;
-  
+  int get belumDireview =>
+      _reports.where((t) => t.status == 'Menunggu Verifikasi').length;
+  int get selesai => _reports
+      .where(
+        (t) =>
+            t.status == 'Approved' ||
+            t.status == 'Rejected' ||
+            t.status == 'Documented',
+      )
+      .length;
+
   List<TiketModel> get laporanMasuk {
     return _reports.where((t) => t.status == 'Menunggu Verifikasi').toList();
   }
@@ -63,7 +73,7 @@ class AdminDashboardProvider extends ChangeNotifier {
       result = result.where((t) => t.status == 'Menunggu Verifikasi').toList();
     } else if (_adminActionTab == 'Selesai Direview') {
       result = result.where((t) => t.status != 'Menunggu Verifikasi').toList();
-      
+
       // 2. Filter by Status (Approve vs Reject) ONLY if in Reviewed tab
       if (_adminStatusFilter == 'Disetujui') {
         result = result.where((t) => t.status == 'Approved').toList();
@@ -74,7 +84,9 @@ class AdminDashboardProvider extends ChangeNotifier {
 
     // 3. Filter by Category
     if (_selectedCategoryFilter != 'Semua') {
-      result = result.where((t) => t.kategori.utama == _selectedCategoryFilter).toList();
+      result = result
+          .where((t) => t.kategori.utama == _selectedCategoryFilter)
+          .toList();
     }
 
     if (_selectedSort == 'Waktu Terbaru') {
@@ -89,6 +101,7 @@ class AdminDashboardProvider extends ChangeNotifier {
           if (t.tingkatUrgensi == 'Prioritas Rendah') return 100;
           return t.jumlahVote;
         }
+
         return getPriorityValue(b).compareTo(getPriorityValue(a));
       });
     }
@@ -96,15 +109,73 @@ class AdminDashboardProvider extends ChangeNotifier {
     return result;
   }
 
-  int get sarprasCount => _reports.where((t) => t.kategori.utama == 'Sarpras').length;
-  int get kebersihanCount => _reports.where((t) => t.kategori.utama == 'Kebersihan').length;
+  int get sarprasCount =>
+      _reports.where((t) => t.kategori.utama == 'Sarpras').length;
+  int get kebersihanCount =>
+      _reports.where((t) => t.kategori.utama == 'Kebersihan').length;
 
-  double get sarprasPercentage => _reports.isEmpty ? 0 : (sarprasCount / _reports.length) * 100;
-  double get kebersihanPercentage => _reports.isEmpty ? 0 : (kebersihanCount / _reports.length) * 100;
+  double get sarprasPercentage =>
+      _reports.isEmpty ? 0 : (sarprasCount / _reports.length) * 100;
+  double get kebersihanPercentage =>
+      _reports.isEmpty ? 0 : (kebersihanCount / _reports.length) * 100;
 
-  int get urgensiHigh => _reports.where((t) => t.tingkatUrgensi == 'Prioritas Tinggi' || (t.tingkatUrgensi == null && t.jumlahVote >= 15)).length;
-  int get urgensiMedium => _reports.where((t) => t.tingkatUrgensi == 'Prioritas Sedang' || (t.tingkatUrgensi == null && t.jumlahVote >= 5 && t.jumlahVote < 15)).length;
-  int get urgensiLow => _reports.where((t) => t.tingkatUrgensi == 'Prioritas Rendah' || (t.tingkatUrgensi == null && t.jumlahVote < 5)).length;
+  int get urgensiHigh => _reports
+      .where(
+        (t) =>
+            t.tingkatUrgensi == 'Prioritas Tinggi' ||
+            (t.tingkatUrgensi == null && t.jumlahVote >= 15),
+      )
+      .length;
+  int get urgensiMedium => _reports
+      .where(
+        (t) =>
+            t.tingkatUrgensi == 'Prioritas Sedang' ||
+            (t.tingkatUrgensi == null &&
+                t.jumlahVote >= 5 &&
+                t.jumlahVote < 15),
+      )
+      .length;
+  int get urgensiLow => _reports
+      .where(
+        (t) =>
+            t.tingkatUrgensi == 'Prioritas Rendah' ||
+            (t.tingkatUrgensi == null && t.jumlahVote < 5),
+      )
+      .length;
+
+  // Data laporan 7 hari terakhir untuk chart (X = hari, Y = jumlah laporan)
+  List<DateTime> get chartLast7Days {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return List<DateTime>.generate(
+      7,
+      (index) => today.subtract(Duration(days: 6 - index)),
+    );
+  }
+
+  List<int> get chartLast7DaysCounts {
+    final days = chartLast7Days;
+    final counts = List<int>.filled(days.length, 0);
+
+    for (final report in _reports) {
+      final created = report.createdAt.toLocal();
+      final reportDay = DateTime(created.year, created.month, created.day);
+      final idx = days.indexOf(reportDay);
+      if (idx != -1) {
+        counts[idx] += 1;
+      }
+    }
+
+    return counts;
+  }
+
+  int get chartMaxCount {
+    final counts = chartLast7DaysCounts;
+    final maxValue = counts.isEmpty
+        ? 0
+        : counts.reduce((a, b) => a > b ? a : b);
+    return maxValue < 4 ? 4 : maxValue;
+  }
 
   Future<void> fetchDashboardStats() async {
     _isLoading = true;
@@ -127,15 +198,19 @@ class AdminDashboardProvider extends ChangeNotifier {
 
   // 5. Fungsi untuk Memproses Tiket (Approve/Reject)
   Future<void> processTicket(
-      String mongoIdStr, String action,
-      {String? urgency, String? rejectReason, String? pjNote}) async {
+    String mongoIdStr,
+    String action, {
+    String? urgency,
+    String? rejectReason,
+    String? pjNote,
+  }) async {
     _isLoading = true;
     notifyListeners();
 
     try {
       final collection = MongoService().getCollection('tickets');
       final now = DateTime.now();
-      
+
       final setMap = <String, dynamic>{
         'updatedAt': now,
         'tanggalVerifikasi': now,
@@ -148,15 +223,18 @@ class AdminDashboardProvider extends ChangeNotifier {
 
       if (action == 'Approve') {
         setMap['tanggalApproval'] = now;
-        setMap['catatanPJ'] = (pjNote != null && pjNote.trim().isNotEmpty) ? pjNote.trim() : null;
+        setMap['catatanPJ'] = (pjNote != null && pjNote.trim().isNotEmpty)
+            ? pjNote.trim()
+            : null;
       } else {
         setMap['tanggalRejection'] = now;
-        setMap['alasanRejection'] = (rejectReason != null && rejectReason.trim().isNotEmpty) ? rejectReason.trim() : null;
+        setMap['alasanRejection'] =
+            (rejectReason != null && rejectReason.trim().isNotEmpty)
+            ? rejectReason.trim()
+            : null;
       }
 
-      final modifier = {
-        '\$set': setMap
-      };
+      final modifier = {'\$set': setMap};
 
       debugPrint("🚀 MODERN UPDATE for _id: $mongoIdStr with action: $action");
 
@@ -166,8 +244,10 @@ class AdminDashboardProvider extends ChangeNotifier {
         modifier,
       );
 
-      debugPrint("📊 Modern Update Result OK: ${result['ok'] == 1.0 || result['ok'] == 1}");
-      
+      debugPrint(
+        "📊 Modern Update Result OK: ${result['ok'] == 1.0 || result['ok'] == 1}",
+      );
+
       if (result['ok'] != 1.0 && result['ok'] != 1) {
         debugPrint("❌ Update Failed: ${result['errmsg']}");
       } else {

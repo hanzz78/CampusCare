@@ -45,7 +45,9 @@ class _HomeTabState extends State<HomeTab> {
 
   List<TiketModel> _applyFilters(List<TiketModel> reports) {
     // Hanya tampilkan laporan yang masih "Menunggu Verifikasi" di halaman utama
-    var result = reports.where((r) => r.status == 'Menunggu Verifikasi').toList();
+    var result = reports
+        .where((r) => r.status == 'Menunggu Verifikasi')
+        .toList();
 
     if (_activeCategory == 'Sarana Prasarana') {
       result = result
@@ -130,10 +132,34 @@ class _HomeTabState extends State<HomeTab> {
           ),
         );
       }
+
+      // Notifikasi komentar baru dari orang lain pada laporan milik user
+      for (final comment in report.comments) {
+        final isOwnComment =
+            (currentUserId != null &&
+                currentUserId.isNotEmpty &&
+                comment.idUser == currentUserId) ||
+            (currentEmail != null &&
+                currentEmail.isNotEmpty &&
+                comment.emailUser == currentEmail);
+        if (isOwnComment || comment.isDeleted) continue;
+
+        final commentKey =
+            'komentar-${report.idTiket}-${comment.id ?? comment.tanggalKomentar.millisecondsSinceEpoch}';
+        items.add(
+          _HomeNotification(
+            key: commentKey,
+            title: 'Ada komentar baru di laporanmu',
+            subtitle: report.judulSingkat,
+            report: report,
+            createdAt: comment.tanggalKomentar,
+          ),
+        );
+      }
     }
 
     items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return items.take(8).toList();
+    return items.take(15).toList();
   }
 
   Future<void> _openFilterPanel() async {
@@ -426,12 +452,13 @@ class _HomeTabState extends State<HomeTab> {
         if (_showNotifications)
           Positioned.fill(
             child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () {
                 setState(() {
                   _showNotifications = false;
                 });
               },
-              child: Container(color: Colors.transparent),
+              child: const SizedBox.expand(),
             ),
           ),
         if (_showNotifications)
@@ -473,13 +500,13 @@ class _HomeTabState extends State<HomeTab> {
                           GestureDetector(
                             onTap: notifications.isEmpty
                                 ? null
-                                : () {
+                                : () async {
                                     setState(() {
                                       _readNotificationKeys.addAll(
                                         notifications.map((n) => n.key),
                                       );
                                     });
-                                    _saveReadKeys();
+                                    await _saveReadKeys();
                                   },
                             child: Text(
                               'Mark all read',
@@ -515,7 +542,7 @@ class _HomeTabState extends State<HomeTab> {
                           shrinkWrap: true,
                           itemCount: notifications.length,
                           separatorBuilder: (_, __) => const Divider(height: 1),
-                          itemBuilder: (context, index) {
+                          itemBuilder: (_, index) {
                             final item = notifications[index];
                             final isRead = _readNotificationKeys.contains(
                               item.key,
@@ -530,12 +557,9 @@ class _HomeTabState extends State<HomeTab> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) {
-                                      if (item.key.startsWith('approved-') || item.key.startsWith('rejected-')) {
-                                        return const ReportHistoryScreen();
-                                      }
-                                      return ReportDetailScreen(report: item.report);
-                                    },
+                                    builder: (_) => ReportDetailScreen(
+                                      report: item.report,
+                                    ),
                                   ),
                                 );
                               },
@@ -576,11 +600,7 @@ class _HomeTabState extends State<HomeTab> {
                                     ),
                                     if (!isRead) ...[
                                       const SizedBox(width: 10),
-                                      const Icon(
-                                        Icons.circle,
-                                        size: 7,
-                                        color: Color(0xFF335C67),
-                                      ),
+                                      const Icon(Icons.circle, size: 8, color: Color(0xFF4CAF50)),
                                     ],
                                   ],
                                 ),

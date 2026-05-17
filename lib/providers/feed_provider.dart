@@ -37,7 +37,9 @@ class FeedProvider extends ChangeNotifier {
       // Simpan ke cache untuk offline mode
       try {
         final prefs = await SharedPreferences.getInstance();
-        final String encodedData = jsonEncode(_reports.map((r) => r.toJson()).toList());
+        final String encodedData = jsonEncode(
+          _reports.map((r) => r.toJson()).toList(),
+        );
         await prefs.setString('cached_feed_reports', encodedData);
       } catch (e) {
         debugPrint("Error caching reports: $e");
@@ -49,7 +51,9 @@ class FeedProvider extends ChangeNotifier {
         final String? cachedData = prefs.getString('cached_feed_reports');
         if (cachedData != null && cachedData.isNotEmpty) {
           final List<dynamic> decodedList = jsonDecode(cachedData);
-          _reports = decodedList.map((json) => TiketModel.fromJson(json)).toList();
+          _reports = decodedList
+              .map((json) => TiketModel.fromJson(json))
+              .toList();
         }
       } catch (cacheError) {
         debugPrint("Error loading cached reports: $cacheError");
@@ -70,7 +74,7 @@ class FeedProvider extends ChangeNotifier {
       // Cek apakah user sudah pernah vote tiket ini
       final existingVote = await votesCol.findOne({
         'idTiket': idTiket,
-        'idUser': ObjectId.fromHexString(userId)
+        'idUser': ObjectId.fromHexString(userId),
       });
 
       if (existingVote != null) {
@@ -81,11 +85,13 @@ class FeedProvider extends ChangeNotifier {
         // Kurangi jumlahVote di koleksi tickets
         final updateResult = await ticketsCol.updateOne(
           where.eq('idTiket', idTiket),
-          modify.inc('jumlahVote', -1)
+          modify.inc('jumlahVote', -1),
         );
 
         if (updateResult.hasWriteErrors) {
-          throw Exception(updateResult.writeError?.errmsg ?? 'Gagal menghapus vote');
+          throw Exception(
+            updateResult.writeError?.errmsg ?? 'Gagal menghapus vote',
+          );
         }
 
         // Update local state
@@ -103,17 +109,19 @@ class FeedProvider extends ChangeNotifier {
         'idTiket': idTiket,
         'idUser': ObjectId.fromHexString(userId),
         'emailUser': emailUser,
-        'createdAt': DateTime.now()
+        'createdAt': DateTime.now(),
       });
 
       // Tambahkan jumlahVote di koleksi tickets
       final updateResult = await ticketsCol.updateOne(
         where.eq('idTiket', idTiket),
-        modify.inc('jumlahVote', 1)
+        modify.inc('jumlahVote', 1),
       );
 
       if (updateResult.hasWriteErrors) {
-        throw Exception(updateResult.writeError?.errmsg ?? 'Gagal menyimpan vote');
+        throw Exception(
+          updateResult.writeError?.errmsg ?? 'Gagal menyimpan vote',
+        );
       }
 
       // Update local state
@@ -129,7 +137,12 @@ class FeedProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> addComment(String idTiket, String content, String userId, String emailUser) async {
+  Future<void> addComment(
+    String idTiket,
+    String content,
+    String userId,
+    String emailUser,
+  ) async {
     try {
       await MongoService().connect();
       final ticketsCol = MongoService().getCollection('tickets');
@@ -146,11 +159,14 @@ class FeedProvider extends ChangeNotifier {
       // Push komentar ke array comments di dalam dokumen tiket
       final result = await ticketsCol.updateOne(
         where.eq('idTiket', idTiket),
-        modify.push('comments', newComment)
+        modify.push('comments', newComment),
       );
 
       if (result.hasWriteErrors) {
-        throw Exception(result.writeError?.errmsg ?? 'Gagal menyimpan ke database (Validation Error)');
+        throw Exception(
+          result.writeError?.errmsg ??
+              'Gagal menyimpan ke database (Validation Error)',
+        );
       }
 
       // Refresh data lokal
@@ -161,7 +177,11 @@ class FeedProvider extends ChangeNotifier {
     }
   }
 
-  Future<void> deleteComment(String idTiket, String commentId, String userId) async {
+  Future<void> deleteComment(
+    String idTiket,
+    String commentId,
+    String userId,
+  ) async {
     try {
       await MongoService().connect();
       final ticketsCol = MongoService().getCollection('tickets');
@@ -169,11 +189,16 @@ class FeedProvider extends ChangeNotifier {
       // Menggunakan pull untuk menghapus komentar spesifik berdasarkan id komentar dan id user
       final result = await ticketsCol.updateOne(
         where.eq('idTiket', idTiket),
-        modify.pull('comments', {'_id': ObjectId.fromHexString(commentId), 'idUser': ObjectId.fromHexString(userId)})
+        modify.pull('comments', {
+          '_id': ObjectId.fromHexString(commentId),
+          'idUser': ObjectId.fromHexString(userId),
+        }),
       );
 
       if (result.hasWriteErrors) {
-        throw Exception(result.writeError?.errmsg ?? 'Gagal menghapus komentar');
+        throw Exception(
+          result.writeError?.errmsg ?? 'Gagal menghapus komentar',
+        );
       }
 
       // Refresh data lokal
@@ -186,7 +211,7 @@ class FeedProvider extends ChangeNotifier {
 
   Future<void> fetchUserStats(String userId) async {
     if (userId.isEmpty) return;
-    
+
     // Ambil data dari cache terlebih dahulu (untuk mode offline)
     final prefs = await SharedPreferences.getInstance();
     _userVoteCount = prefs.getInt('cached_vote_count_$userId') ?? 0;
@@ -198,8 +223,12 @@ class FeedProvider extends ChangeNotifier {
       final votesCol = MongoService().getCollection('votes');
       final ticketsCol = MongoService().getCollection('tickets');
 
-      _userVoteCount = await votesCol.count(where.eq('idUser', ObjectId.fromHexString(userId)));
-      _userReportCount = await ticketsCol.count(where.eq('idUser', ObjectId.fromHexString(userId)));
+      _userVoteCount = await votesCol.count(
+        where.eq('idUser', ObjectId.fromHexString(userId)),
+      );
+      _userReportCount = await ticketsCol.count(
+        where.eq('idUser', ObjectId.fromHexString(userId)),
+      );
 
       // Load semua idTiket yang sudah di-vote user ini
       final myVotes = await votesCol

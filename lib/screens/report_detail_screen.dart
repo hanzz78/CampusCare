@@ -33,7 +33,8 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
       orElse: () => widget.report,
     );
 
-    final isSarpras = updatedReport.kategori.utama == 'Sarpras' ||
+    final isSarpras =
+        updatedReport.kategori.utama == 'Sarpras' ||
         updatedReport.kategori.utama == 'Sarana Prasarana';
     final categoryLabel = isSarpras ? 'Sarana Prasarana' : 'Kebersihan';
     final lokasiStr = updatedReport.lokasiDisplay;
@@ -72,21 +73,32 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                             return Container(
                               color: const Color(0xFF2A5256),
                               child: const Center(
-                                child: CircularProgressIndicator(color: Colors.white),
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
                               ),
                             );
                           },
-                          errorBuilder: (context, error, stackTrace) => Container(
-                            color: Colors.grey.shade300,
-                            child: const Center(
-                              child: Icon(Icons.broken_image, size: 80, color: Colors.white54),
-                            ),
-                          ),
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                                color: Colors.grey.shade300,
+                                child: const Center(
+                                  child: Icon(
+                                    Icons.broken_image,
+                                    size: 80,
+                                    color: Colors.white54,
+                                  ),
+                                ),
+                              ),
                         )
                       : Container(
                           color: Colors.grey.shade300,
                           child: const Center(
-                            child: Icon(Icons.image, size: 80, color: Colors.white54),
+                            child: Icon(
+                              Icons.image,
+                              size: 80,
+                              color: Colors.white54,
+                            ),
                           ),
                         ),
 
@@ -112,7 +124,10 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                     bottom: 16,
                     right: 16,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 7,
+                      ),
                       decoration: BoxDecoration(
                         color: isSarpras
                             ? const Color(0xFF335C67)
@@ -162,7 +177,11 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   // Info row: lokasi · waktu
                   Row(
                     children: [
-                      const Icon(Icons.location_on_outlined, color: Color(0xFF9E2A2B), size: 15),
+                      const Icon(
+                        Icons.location_on_outlined,
+                        color: Color(0xFF9E2A2B),
+                        size: 15,
+                      ),
                       const SizedBox(width: 4),
                       Expanded(
                         child: Text(
@@ -177,11 +196,18 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(Icons.access_time_rounded, size: 13, color: Color(0xFF7A9BA0)),
+                      const Icon(
+                        Icons.access_time_rounded,
+                        size: 13,
+                        color: Color(0xFF7A9BA0),
+                      ),
                       const SizedBox(width: 3),
                       Text(
                         feedProvider.getTimeAgo(updatedReport.createdAt),
-                        style: const TextStyle(fontSize: 12, color: Color(0xFF7A9BA0)),
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF7A9BA0),
+                        ),
                       ),
                     ],
                   ),
@@ -251,7 +277,10 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                                     ? updatedReport.catatanPJ
                                     : updatedReport.alasanRejection) ??
                                 'Tidak ada catatan.',
-                            style: const TextStyle(fontSize: 14, color: Colors.black87),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black87,
+                            ),
                           ),
                           if (updatedReport.tanggalVerifikasi != null) ...[
                             const SizedBox(height: 12),
@@ -259,9 +288,12 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                             const SizedBox(height: 4),
                             Text(
                               'Diverifikasi pada: ${updatedReport.tanggalVerifikasi!.toLocal().toString().split('.')[0]}',
-                              style: const TextStyle(fontSize: 11, color: Colors.grey),
+                              style: const TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                              ),
                             ),
-                          ]
+                          ],
                         ],
                       ),
                     ),
@@ -289,115 +321,132 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
 
                   // ── Dukungan Civitas ──────────────────────────────────
                   if (updatedReport.status == 'Menunggu Verifikasi')
-                    Builder(builder: (context) {
-                      final isVoted = feedProvider.hasUserVoted(updatedReport.idTiket);
-                      return Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8F3EC),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          children: [
-                            Text(
-                              '${updatedReport.jumlahVote}',
-                              style: const TextStyle(
-                                fontSize: 30,
-                                fontWeight: FontWeight.bold,
-                                color: Color(0xFF2A5256),
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            const Expanded(
-                              child: Text(
-                                'Civitas Akademika memberi dukungan untuk laporan anda',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                  height: 1.4,
+                    Builder(
+                      builder: (context) {
+                        final isVoted = feedProvider.hasUserVoted(
+                          updatedReport.idTiket,
+                        );
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFF8F3EC),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            children: [
+                              Text(
+                                '${updatedReport.jumlahVote}',
+                                style: const TextStyle(
+                                  fontSize: 30,
+                                  fontWeight: FontWeight.bold,
+                                  color: Color(0xFF2A5256),
                                 ),
                               ),
-                            ),
-                            const SizedBox(width: 12),
-                            GestureDetector(
-                              onTap: () async {
-                                final userId = authProvider.userId;
-                                final email = authProvider.email;
-                                if (userId == null || email == null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Anda harus login untuk memberikan dukungan!'),
-                                    ),
-                                  );
-                                  return;
-                                }
-                                try {
-                                  await feedProvider.upvote(
-                                      updatedReport.idTiket, userId, email);
-                                } catch (e) {
-                                  if (context.mounted) {
+                              const SizedBox(width: 12),
+                              const Expanded(
+                                child: Text(
+                                  'Civitas Akademika memberi dukungan untuk laporan anda',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                    height: 1.4,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              GestureDetector(
+                                onTap: () async {
+                                  final userId = authProvider.userId;
+                                  final email = authProvider.email;
+                                  if (userId == null || email == null) {
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
+                                      const SnackBar(
                                         content: Text(
-                                            e.toString().replaceAll('Exception: ', '')),
+                                          'Anda harus login untuk memberikan dukungan!',
+                                        ),
                                       ),
                                     );
+                                    return;
                                   }
-                                }
-                              },
-                              child: AnimatedContainer(
-                                duration: const Duration(milliseconds: 250),
-                                curve: Curves.easeInOut,
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 10),
-                                decoration: BoxDecoration(
-                                  color: isVoted
-                                      ? const Color(0xFF9E2A2B)
-                                      : Colors.white,
-                                  borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(
+                                  try {
+                                    await feedProvider.upvote(
+                                      updatedReport.idTiket,
+                                      userId,
+                                      email,
+                                    );
+                                  } catch (e) {
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            e.toString().replaceAll(
+                                              'Exception: ',
+                                              '',
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                                child: AnimatedContainer(
+                                  duration: const Duration(milliseconds: 250),
+                                  curve: Curves.easeInOut,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
                                     color: isVoted
                                         ? const Color(0xFF9E2A2B)
-                                        : const Color(0xFFD0C8BE),
-                                    width: 1.5,
-                                  ),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: Colors.black.withOpacity(0.06),
-                                      blurRadius: 6,
-                                      offset: const Offset(0, 2),
-                                    ),
-                                  ],
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Icon(
-                                      Icons.arrow_upward_rounded,
-                                      size: 15,
+                                        : Colors.white,
+                                    borderRadius: BorderRadius.circular(12),
+                                    border: Border.all(
                                       color: isVoted
-                                          ? Colors.white
-                                          : const Color(0xFF2A5256),
+                                          ? const Color(0xFF9E2A2B)
+                                          : const Color(0xFFD0C8BE),
+                                      width: 1.5,
                                     ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      'Dukung',
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.bold,
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.06),
+                                        blurRadius: 6,
+                                        offset: const Offset(0, 2),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.arrow_upward_rounded,
+                                        size: 15,
                                         color: isVoted
                                             ? Colors.white
                                             : const Color(0xFF2A5256),
                                       ),
-                                    ),
-                                  ],
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        'Dukung',
+                                        style: TextStyle(
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.bold,
+                                          color: isVoted
+                                              ? Colors.white
+                                              : const Color(0xFF2A5256),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
                               ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
 
                   const SizedBox(height: 28),
                   const Divider(color: Color(0xFFF0F0F0), thickness: 1),
@@ -469,7 +518,11 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   CircleAvatar(
                     radius: 18,
                     backgroundColor: Colors.blueGrey.shade100,
-                    child: const Icon(Icons.person, color: Colors.white, size: 18),
+                    child: const Icon(
+                      Icons.person,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -477,10 +530,14 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                       controller: _commentController,
                       decoration: InputDecoration(
                         hintText: 'Tambahkan komentar...',
-                        hintStyle:
-                            const TextStyle(color: Colors.grey, fontSize: 14),
+                        hintStyle: const TextStyle(
+                          color: Colors.grey,
+                          fontSize: 14,
+                        ),
                         contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 10),
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
                         filled: true,
                         fillColor: Colors.grey.shade100,
                         border: OutlineInputBorder(
@@ -503,15 +560,16 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                             if (content.length < 5) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content:
-                                        Text('Komentar minimal 5 karakter!')),
+                                  content: Text('Komentar minimal 5 karakter!'),
+                                ),
                               );
                               return;
                             }
                             if (userId == null || email == null) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                    content: Text('Anda harus login!')),
+                                  content: Text('Anda harus login!'),
+                                ),
                               );
                               return;
                             }
@@ -520,7 +578,11 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
 
                             try {
                               await feedProvider.addComment(
-                                  updatedReport.idTiket, content, userId, email);
+                                updatedReport.idTiket,
+                                content,
+                                userId,
+                                email,
+                              );
                               _commentController.clear();
                               if (context.mounted) {
                                 FocusScope.of(context).unfocus();
@@ -530,7 +592,8 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                        'Gagal: ${e.toString().replaceAll("Exception: ", "")}'),
+                                      'Gagal: ${e.toString().replaceAll("Exception: ", "")}',
+                                    ),
                                   ),
                                 );
                               }
@@ -554,9 +617,15 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                               width: 18,
                               height: 18,
                               child: CircularProgressIndicator(
-                                  color: Colors.white, strokeWidth: 2),
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
                             )
-                          : const Icon(Icons.send, color: Colors.white, size: 18),
+                          : const Icon(
+                              Icons.send,
+                              color: Colors.white,
+                              size: 18,
+                            ),
                     ),
                   ),
                 ],
@@ -572,10 +641,15 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     FeedProvider feedProvider,
     String? currentUserId,
   ) {
-    final name = comment.emailUser.split('@').first;
     final time = feedProvider.getTimeAgo(comment.tanggalKomentar);
     final bool isMyComment =
         currentUserId != null && comment.idUser == currentUserId;
+
+    // Tampilkan "Saya" untuk komentar milik current user; lainnya "Anonim".
+    final displayName = isMyComment ? 'Saya' : 'Anonim';
+    final avatarInitial = displayName.isNotEmpty
+        ? displayName[0].toUpperCase()
+        : '?';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -589,7 +663,11 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
             // Long-press untuk hapus (hanya komentar milik sendiri)
             onLongPress: isMyComment && comment.id != null
                 ? () => _showDeleteDialog(
-                    comment, idTiket, feedProvider, currentUserId)
+                    comment,
+                    idTiket,
+                    feedProvider,
+                    currentUserId,
+                  )
                 : null,
             splashColor: isMyComment
                 ? const Color(0xFF335C67).withOpacity(0.12)
@@ -616,10 +694,11 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                     children: [
                       CircleAvatar(
                         radius: 15,
-                        backgroundColor:
-                            const Color(0xFF335C67).withOpacity(0.12),
+                        backgroundColor: const Color(
+                          0xFF335C67,
+                        ).withOpacity(0.12),
                         child: Text(
-                          name.isNotEmpty ? name[0].toUpperCase() : '?',
+                          avatarInitial,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
@@ -630,7 +709,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          name,
+                          displayName,
                           style: const TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 13,
@@ -745,11 +824,15 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                         Navigator.pop(ctx);
                         try {
                           await feedProvider.deleteComment(
-                              idTiket, comment.id!, currentUserId);
+                            idTiket,
+                            comment.id!,
+                            currentUserId,
+                          );
                           if (mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
-                                  content: Text('Komentar berhasil dihapus')),
+                                content: Text('Komentar berhasil dihapus'),
+                              ),
                             );
                           }
                         } catch (e) {
@@ -757,7 +840,8 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
-                                    'Gagal: ${e.toString().replaceAll("Exception: ", "")}'),
+                                  'Gagal: ${e.toString().replaceAll("Exception: ", "")}',
+                                ),
                               ),
                             );
                           }

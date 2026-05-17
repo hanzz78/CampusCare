@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import 'dashboard_screen.dart';
 import 'admin/admin_shell_screen.dart';
+import 'landing_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -56,6 +57,21 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
 
+            // Tombol kembali ke landing page (overlay, tidak menggeser layout)
+            Positioned(
+              top: 0,
+              left: 8,
+              child: SafeArea(
+                child: IconButton(
+                  onPressed: () => Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LandingScreen()),
+                  ),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white70, size: 20),
+                ),
+              ),
+            ),
+
             SafeArea(
               child: Column(
                 children: [
@@ -76,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   TextSpan(
                                     text: 'Campus',
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 20,
                                       fontWeight: FontWeight.bold,
                                       color: Color(0xFF9E2A2B),
                                     ),
@@ -84,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   TextSpan(
                                     text: 'Care',
                                     style: TextStyle(
-                                      fontSize: 16,
+                                      fontSize: 20,
                                       fontWeight: FontWeight.bold,
                                       color: Color(0xFFE09F3E),
                                     ),
@@ -153,8 +169,21 @@ class _LoginScreenState extends State<LoginScreen> {
                       left: 32,
                       right: 32,
                     ),
-                    child: SizedBox(
-                      width: double.infinity,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'Login dengan Akun Polban',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.6),
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        SizedBox(
+                          width: double.infinity,
                       child: ElevatedButton(
                         onPressed: () async {
                           try {
@@ -223,6 +252,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                 ),
                               ),
                       ),
+                    ),
+                      ],
                     ),
                   ),
                 ],
