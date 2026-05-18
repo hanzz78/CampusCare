@@ -645,10 +645,11 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     final bool isMyComment =
         currentUserId != null && comment.idUser == currentUserId;
 
-    // Tampilkan "Saya" untuk komentar milik current user; lainnya "Anonim".
-    final displayName = isMyComment ? 'Saya' : 'Anonim';
-    final avatarInitial = displayName.isNotEmpty
-        ? displayName[0].toUpperCase()
+    // Tampilkan "Saya" untuk komentar milik current user; lainnya "Pengguna".
+    final displayName = isMyComment ? 'Saya' : 'Pengguna';
+    // Inisial dari email user (huruf pertama sebelum @), bukan dari label displayName
+    final avatarInitial = comment.emailUser.isNotEmpty
+        ? comment.emailUser[0].toUpperCase()
         : '?';
 
     return Padding(

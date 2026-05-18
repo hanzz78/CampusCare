@@ -5,6 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:printing/printing.dart';
 import '../../models/tiket_model.dart';
 import '../../providers/admin_dashboard_provider.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
 import '../../services/pdf_service.dart';
 
@@ -383,16 +384,24 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () async {
+                  final note    = noteCtrl.text;
+                  final urgency = _urgencyLevel;
                   Navigator.pop(ctx);
                   try {
                     await context.read<AdminDashboardProvider>().processTicket(
                       widget.report.id!,
                       'Approve',
-                      urgency: _urgencyLevel,
-                      pjNote: noteCtrl.text,
+                      urgency: urgency,
+                      pjNote: note,
                     );
                     if (!mounted) return;
-                    _printPdf(widget.report);
+                    _printPdf(
+                      widget.report,
+                      statusOverride:  'Approved',
+                      pjNoteOverride:  note,
+                      urgencyOverride: urgency,
+                      approvalDateOverride: DateTime.now(),
+                    );
                     ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Laporan berhasil disetujui.')));
                   } catch (e) {
                     if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal: $e')));
@@ -506,10 +515,27 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
     );
   }
 
-  Future<void> _printPdf(TiketModel report) async {
+  Future<void> _printPdf(
+    TiketModel report, {
+    String? statusOverride,
+    String? pjNoteOverride,
+    String? urgencyOverride,
+    DateTime? approvalDateOverride,
+  }) async {
     try {
-      final bytes = await PdfService.generateReportPdf(report);
-      await Printing.layoutPdf(onLayout: (_) async => bytes, name: 'Laporan_${report.idTiket}.pdf');
+      final approvedBy = context.read<AuthProvider>().displayName ?? 'Penanggung Jawab';
+      final bytes = await PdfService.generateReportPdf(
+        report,
+        approvedBy: approvedBy,
+        statusOverride: statusOverride,
+        pjNoteOverride: pjNoteOverride,
+        urgencyOverride: urgencyOverride,
+        approvalDateOverride: approvalDateOverride,
+      );
+      await Printing.layoutPdf(
+        onLayout: (_) async => bytes,
+        name: 'Laporan_${report.idTiket}.pdf',
+      );
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal buat PDF: $e'), backgroundColor: Colors.red));
     }
