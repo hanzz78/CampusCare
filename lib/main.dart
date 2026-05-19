@@ -23,56 +23,32 @@ import 'services/network_connectivity_service.dart';
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
+  // Langsung jalankan inisialisasi dasar secepat mungkin
   WidgetsFlutterBinding.ensureInitialized();
 
-  try {
-    await Firebase.initializeApp();
-    if (kDebugMode) {
-      print('✅ Firebase Initialized');
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      print(
-        '⚠️ Firebase initialization failed: $e. Continuing without Firebase.',
-      );
-    }
-  }
-
-  // Inisialisasi Hive untuk penyimpanan offline
+  // Load lokal yang sangat cepat (<10ms)
+  await dotenv.load(fileName: ".env");
   await HiveService().init();
-
-  // Mulai memantau konektivitas jaringan untuk sync otomatis
   NetworkConnectivityService().startListening();
 
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
-
-  // Inisialisasi Supabase
+  // Firebase butuh di-await tapi biasanya sangat cepat
   try {
-    await Supabase.initialize(
-      url: dotenv.env['SUPABASE_URL'] ?? '',
-      anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
-    );
-    if (kDebugMode) {
-      print('✅ Supabase Initialized');
-    }
+    await Firebase.initializeApp();
   } catch (e) {
-    if (kDebugMode) {
-      print('❌ Failed to initialize Supabase: $e');
-    }
+    if (kDebugMode) print('Firebase init failed: $e');
   }
 
-  // Hubungkan ke MongoDB Atlas saat aplikasi menyala
-  try {
-    await MongoService().connect();
-    if (kDebugMode) {
-      print('✅ MongoDB Atlas Initialized in main()');
-    }
-  } catch (e) {
-    if (kDebugMode) {
-      print('❌ Failed to connect to MongoDB: $e');
-    }
-  }
+  // Supabase & MongoDB di-background agar tidak menahan layar utama
+  Supabase.initialize(
+    url: dotenv.env['SUPABASE_URL'] ?? '',
+    anonKey: dotenv.env['SUPABASE_ANON_KEY'] ?? '',
+  ).catchError((e) {
+    if (kDebugMode) print('Supabase init failed: $e');
+  });
+
+  MongoService().connect().catchError((e) {
+    if (kDebugMode) print('MongoDB connect failed: $e');
+  });
 
   runApp(
     MultiProvider(
@@ -98,6 +74,11 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(primarySwatch: Colors.blue),
       home: Consumer<AuthProvider>(
         builder: (context, auth, child) {
+          // Selama session sedang dicek, jangan tampilkan apa-apa agar terasa instant
+          if (!auth.isSessionChecked) {
+            return const Scaffold(backgroundColor: Colors.white);
+          }
+
           // Auto Routing: Kalau udah login, lempar ke Dashboard. Kalau belum, ke Landing.
           if (auth.isLoggedIn) {
             if (auth.role == 'Penanggung Jawab') {

@@ -16,6 +16,7 @@ class AuthProvider extends ChangeNotifier {
 
   bool _isLoading = false;
   bool _isLoggedIn = false;
+  bool _isSessionChecked = false;
   String _role = 'user'; // Default role
   String? _userId;
   String? _profileImageUrl;
@@ -27,6 +28,7 @@ class AuthProvider extends ChangeNotifier {
   // Getters supaya bisa dibaca oleh UI
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _isLoggedIn;
+  bool get isSessionChecked => _isSessionChecked;
   String get role => _role;
   String? get userId => _userId;
   String? get profileImageUrl => _profileImageUrl;
@@ -57,6 +59,7 @@ class AuthProvider extends ChangeNotifier {
       _userId = null;
       _profileImageUrl = null;
     }
+    _isSessionChecked = true;
     notifyListeners();
   }
 
