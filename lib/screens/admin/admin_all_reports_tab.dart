@@ -11,7 +11,7 @@ class AdminAllReportsTab extends StatefulWidget {
 }
 
 class _AdminAllReportsTabState extends State<AdminAllReportsTab> {
-  bool _isFilterExpanded = true;
+  bool _isFilterExpanded = false;
 
   @override
   Widget build(BuildContext context) {
