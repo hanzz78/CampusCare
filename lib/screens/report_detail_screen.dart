@@ -399,14 +399,14 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                                     vertical: 10,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: isVoted
+                                    color: !isVoted
                                         ? const Color(0xFF9E2A2B)
-                                        : Colors.white,
+                                        : Colors.grey.shade200,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: isVoted
+                                      color: !isVoted
                                           ? const Color(0xFF9E2A2B)
-                                          : const Color(0xFFD0C8BE),
+                                          : Colors.grey.shade400,
                                       width: 1.5,
                                     ),
                                     boxShadow: [
@@ -421,21 +421,21 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        Icons.arrow_upward_rounded,
+                                        isVoted ? Icons.close_rounded : Icons.arrow_upward_rounded,
                                         size: 15,
-                                        color: isVoted
+                                        color: !isVoted
                                             ? Colors.white
-                                            : const Color(0xFF2A5256),
+                                            : Colors.grey.shade700,
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        'Dukung',
+                                        isVoted ? 'Batal Dukung' : 'Dukung',
                                         style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.bold,
-                                          color: isVoted
+                                          color: !isVoted
                                               ? Colors.white
-                                              : const Color(0xFF2A5256),
+                                              : Colors.grey.shade700,
                                         ),
                                       ),
                                     ],
