@@ -518,11 +518,16 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   CircleAvatar(
                     radius: 18,
                     backgroundColor: Colors.blueGrey.shade100,
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                    backgroundImage: authProvider.profileImageUrl != null && authProvider.profileImageUrl!.isNotEmpty
+                        ? NetworkImage(authProvider.profileImageUrl!)
+                        : null,
+                    child: authProvider.profileImageUrl == null || authProvider.profileImageUrl!.isEmpty
+                        ? const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 18,
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -582,6 +587,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                                 content,
                                 userId,
                                 email,
+                                authProvider.profileImageUrl,
                               );
                               _commentController.clear();
                               if (context.mounted) {
@@ -698,14 +704,19 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                         backgroundColor: const Color(
                           0xFF335C67,
                         ).withOpacity(0.12),
-                        child: Text(
-                          avatarInitial,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                            color: Color(0xFF335C67),
-                          ),
-                        ),
+                        backgroundImage: comment.profileImageUrl != null && comment.profileImageUrl!.isNotEmpty
+                            ? NetworkImage(comment.profileImageUrl!)
+                            : null,
+                        child: comment.profileImageUrl == null || comment.profileImageUrl!.isEmpty
+                            ? Text(
+                                avatarInitial,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: Color(0xFF335C67),
+                                ),
+                              )
+                            : null,
                       ),
                       const SizedBox(width: 10),
                       Expanded(

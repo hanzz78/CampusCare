@@ -219,6 +219,7 @@ class CommentModel {
   final String content;
   final DateTime tanggalKomentar;
   final bool isDeleted;
+  final String? profileImageUrl;
 
   CommentModel({
     this.id,
@@ -227,6 +228,7 @@ class CommentModel {
     required this.content,
     required this.tanggalKomentar,
     required this.isDeleted,
+    this.profileImageUrl,
   });
 
   factory CommentModel.fromJson(Map<String, dynamic> json) {
@@ -237,6 +239,7 @@ class CommentModel {
       content: json['content'] as String? ?? '',
       tanggalKomentar: TiketModel._parseDate(json['tanggalKomentar']),
       isDeleted: json['isDeleted'] as bool? ?? false,
+      profileImageUrl: json['profileImageUrl'] as String?,
     );
   }
 
@@ -248,6 +251,7 @@ class CommentModel {
       'content': content,
       'tanggalKomentar': tanggalKomentar.toIso8601String(),
       'isDeleted': isDeleted,
+      if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
     };
   }
 }
