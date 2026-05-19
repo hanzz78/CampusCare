@@ -130,19 +130,23 @@ class FeedProvider extends ChangeNotifier {
       final ticket = await ticketsCol.findOne(where.eq('idTiket', idTiket));
       if (ticket != null) {
         final ticketOwnerId = ticket['idUser'];
-        final currentUserId = ObjectId.fromHexString(userId);
         
         // Hanya kirim notifikasi jika yang upvote BUKAN pemilik tiket
-        if (ticketOwnerId != currentUserId) {
+        if (ticketOwnerId != null && ticketOwnerId.toString() != ObjectId.fromHexString(userId).toString()) {
           final notificationsCol = MongoService().getCollection('notifications');
-          await notificationsCol.insert({
-            'idTiket': idTiket,
-            'idReceiver': ticketOwnerId,
-            'type': 'upvote',
-            'message': 'Seseorang telah memberikan dukungan pada laporan Anda "${ticket['judulSingkat']}"',
-            'isRead': false,
-            'createdAt': DateTime.now(),
-          });
+          try {
+            await notificationsCol.insert({
+              'idTiket': idTiket,
+              'idReceiver': ticketOwnerId,
+              'type': 'upvote',
+              'message': 'Seseorang telah memberikan dukungan pada laporan Anda "${ticket['judulSingkat']}"',
+              'isRead': false,
+              'createdAt': DateTime.now(),
+            });
+            debugPrint("✅ Notifikasi upvote berhasil disimpan.");
+          } catch (e) {
+            debugPrint("❌ Error menyimpan notifikasi upvote: $e");
+          }
         }
       }
 
@@ -197,21 +201,25 @@ class FeedProvider extends ChangeNotifier {
       final ticket = await ticketsCol.findOne(where.eq('idTiket', idTiket));
       if (ticket != null) {
         final ticketOwnerId = ticket['idUser'];
-        final currentUserId = ObjectId.fromHexString(userId);
         
         // Hanya kirim notifikasi jika yang komen BUKAN pemilik tiket
-        if (ticketOwnerId != currentUserId) {
+        if (ticketOwnerId != null && ticketOwnerId.toString() != ObjectId.fromHexString(userId).toString()) {
           final notificationsCol = MongoService().getCollection('notifications');
           final commenterName = emailUser.split('@')[0]; // Ambil nama dari email
           
-          await notificationsCol.insert({
-            'idTiket': idTiket,
-            'idReceiver': ticketOwnerId,
-            'type': 'comment',
-            'message': '$commenterName memberikan komentar pada laporan Anda "${ticket['judulSingkat']}"',
-            'isRead': false,
-            'createdAt': DateTime.now(),
-          });
+          try {
+            await notificationsCol.insert({
+              'idTiket': idTiket,
+              'idReceiver': ticketOwnerId,
+              'type': 'comment',
+              'message': '$commenterName memberikan komentar pada laporan Anda "${ticket['judulSingkat']}"',
+              'isRead': false,
+              'createdAt': DateTime.now(),
+            });
+            debugPrint("✅ Notifikasi komentar berhasil disimpan.");
+          } catch (e) {
+            debugPrint("❌ Error menyimpan notifikasi komentar: $e");
+          }
         }
       }
 

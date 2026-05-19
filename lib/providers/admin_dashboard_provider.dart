@@ -262,14 +262,19 @@ class AdminDashboardProvider extends ChangeNotifier {
         if (ticket != null) {
           final notificationsCol = MongoService().getCollection('notifications');
           final statusStr = action == 'Approve' ? 'disetujui' : 'ditolak';
-          await notificationsCol.insert({
-            'idTiket': ticket['idTiket'], // Menyimpan ID tiket untuk direferensikan
-            'idReceiver': ticket['idUser'], // Pemilik tiket
-            'type': 'status_update',
-            'message': 'Laporan Anda "${ticket['judulSingkat']}" telah $statusStr oleh Penanggung Jawab.',
-            'isRead': false,
-            'createdAt': DateTime.now(),
-          });
+          try {
+            await notificationsCol.insert({
+              'idTiket': ticket['idTiket'], // Menyimpan ID tiket untuk direferensikan
+              'idReceiver': ticket['idUser'], // Pemilik tiket
+              'type': 'status_update',
+              'message': 'Laporan Anda "${ticket['judulSingkat']}" telah $statusStr oleh Penanggung Jawab.',
+              'isRead': false,
+              'createdAt': DateTime.now(),
+            });
+            debugPrint("✅ Notifikasi status_update berhasil disimpan.");
+          } catch (e) {
+            debugPrint("❌ Error menyimpan notifikasi status_update: $e");
+          }
         }
       }
 
