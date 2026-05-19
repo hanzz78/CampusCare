@@ -483,6 +483,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                       updatedReport.idTiket,
                       feedProvider,
                       authProvider.userId,
+                      updatedReport.status,
                     );
                   }),
 
@@ -646,10 +647,12 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     String idTiket,
     FeedProvider feedProvider,
     String? currentUserId,
+    String ticketStatus,
   ) {
     final time = feedProvider.getTimeAgo(comment.tanggalKomentar);
     final bool isMyComment =
         currentUserId != null && comment.idUser == currentUserId;
+    final bool canDelete = isMyComment && ticketStatus == 'Menunggu Verifikasi';
 
     // Tampilkan "Saya" untuk komentar milik current user; lainnya "Pengguna".
     final displayName = isMyComment ? 'Saya' : 'Pengguna';
@@ -667,8 +670,8 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
               ? const Color(0xFFF0F7F7)
               : const Color(0xFFF8F3EC),
           child: InkWell(
-            // Long-press untuk hapus (hanya komentar milik sendiri)
-            onLongPress: isMyComment && comment.id != null
+            // Long-press untuk hapus (hanya komentar milik sendiri dan jika tiket belum ditanggapi)
+            onLongPress: canDelete && comment.id != null
                 ? () => _showDeleteDialog(
                     comment,
                     idTiket,
@@ -747,8 +750,8 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                       height: 1.45,
                     ),
                   ),
-                  // Hint hapus — hanya untuk komentar sendiri
-                  if (isMyComment) ...[
+                  // Hint hapus — hanya untuk komentar yang bisa dihapus
+                  if (canDelete) ...[
                     const SizedBox(height: 6),
                     Row(
                       children: [
