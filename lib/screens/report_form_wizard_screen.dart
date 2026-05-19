@@ -571,7 +571,7 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
           ),
           const SizedBox(height: 32),
           const Text(
-            'Keterangan Tempat (opsional)',
+            'Keterangan Tempat *',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,

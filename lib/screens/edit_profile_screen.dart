@@ -26,8 +26,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final authProvider = context.read<AuthProvider>();
     _nameController = TextEditingController(text: authProvider.displayName ?? '');
     _emailController = TextEditingController(text: authProvider.email ?? '');
-    _locationController = TextEditingController(text: 'Gedung D');
-    _phoneController = TextEditingController(text: '');
+    _locationController = TextEditingController(text: authProvider.location ?? 'Gedung D');
+    _phoneController = TextEditingController(text: authProvider.phone ?? '');
   }
 
   @override
@@ -311,7 +311,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
-  void _handleSaveProfile() {
+  Future<void> _handleSaveProfile() async {
     // Validasi
     if (_nameController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -323,41 +323,73 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       return;
     }
 
-    // Show success dialog
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text(
-          'Berhasil',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        content: const Text('Profil Anda telah berhasil diperbarui.'),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        actions: [
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(dialogContext);
-              Navigator.pop(context); // Kembali ke profile tab
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF3B696D),
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
+    try {
+      // Tampilkan indikator loading
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(child: CircularProgressIndicator(color: Color(0xFF3B696D))),
+      );
+
+      await context.read<AuthProvider>().updateProfileData(
+        _nameController.text.trim(),
+        _locationController.text.trim(),
+        _phoneController.text.trim(),
+      );
+
+      // Tutup loading dialog
+      if (mounted) Navigator.pop(context);
+
+      if (mounted) {
+        // Show success dialog
+        showDialog(
+          context: context,
+          builder: (dialogContext) => AlertDialog(
+            title: const Text(
+              'Berhasil',
+              style: TextStyle(fontWeight: FontWeight.bold),
             ),
-            child: const Text(
-              'OK',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
+            content: const Text('Profil Anda telah berhasil diperbarui.'),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
             ),
+            actions: [
+              ElevatedButton(
+                onPressed: () {
+                  Navigator.pop(dialogContext);
+                  Navigator.pop(context); // Kembali ke profile tab
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF3B696D),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                child: const Text(
+                  'OK',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
+      }
+    } catch (e) {
+      // Tutup loading dialog jika error
+      if (mounted) Navigator.pop(context);
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal memperbarui profil: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 }
