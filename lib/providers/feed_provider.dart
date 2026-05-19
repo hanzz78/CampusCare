@@ -109,6 +109,28 @@ class FeedProvider extends ChangeNotifier {
         throw Exception(updateResult.writeError?.errmsg ?? 'Gagal menyimpan vote');
       }
 
+      // ----------------------------------------------------
+      // NOTIFICATION LOGIC (UPVOTE)
+      // ----------------------------------------------------
+      final ticket = await ticketsCol.findOne(where.eq('idTiket', idTiket));
+      if (ticket != null) {
+        final ticketOwnerId = ticket['idUser'];
+        final currentUserId = ObjectId.fromHexString(userId);
+        
+        // Hanya kirim notifikasi jika yang upvote BUKAN pemilik tiket
+        if (ticketOwnerId != currentUserId) {
+          final notificationsCol = MongoService().getCollection('notifications');
+          await notificationsCol.insert({
+            'idTiket': idTiket,
+            'idReceiver': ticketOwnerId,
+            'type': 'upvote',
+            'message': 'Seseorang telah memberikan dukungan pada laporan Anda "${ticket['judulSingkat']}"',
+            'isRead': false,
+            'createdAt': DateTime.now(),
+          });
+        }
+      }
+
       // Refresh data lokal
       await fetchReports();
       await fetchUserStats(userId);
@@ -141,6 +163,30 @@ class FeedProvider extends ChangeNotifier {
 
       if (result.hasWriteErrors) {
         throw Exception(result.writeError?.errmsg ?? 'Gagal menyimpan ke database (Validation Error)');
+      }
+
+      // ----------------------------------------------------
+      // NOTIFICATION LOGIC (COMMENT)
+      // ----------------------------------------------------
+      final ticket = await ticketsCol.findOne(where.eq('idTiket', idTiket));
+      if (ticket != null) {
+        final ticketOwnerId = ticket['idUser'];
+        final currentUserId = ObjectId.fromHexString(userId);
+        
+        // Hanya kirim notifikasi jika yang komen BUKAN pemilik tiket
+        if (ticketOwnerId != currentUserId) {
+          final notificationsCol = MongoService().getCollection('notifications');
+          final commenterName = emailUser.split('@')[0]; // Ambil nama dari email
+          
+          await notificationsCol.insert({
+            'idTiket': idTiket,
+            'idReceiver': ticketOwnerId,
+            'type': 'comment',
+            'message': '$commenterName memberikan komentar pada laporan Anda "${ticket['judulSingkat']}"',
+            'isRead': false,
+            'createdAt': DateTime.now(),
+          });
+        }
       }
 
       // Refresh data lokal

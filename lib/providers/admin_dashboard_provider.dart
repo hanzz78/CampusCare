@@ -172,6 +172,23 @@ class AdminDashboardProvider extends ChangeNotifier {
         debugPrint("❌ Update Failed: ${result['errmsg']}");
       } else {
         debugPrint("✅ Database Successfully Updated!");
+        
+        // ----------------------------------------------------
+        // NOTIFICATION LOGIC (STATUS UPDATE)
+        // ----------------------------------------------------
+        final ticket = await collection.findOne(where.id(ObjectId.fromHexString(mongoIdStr)));
+        if (ticket != null) {
+          final notificationsCol = MongoService().getCollection('notifications');
+          final statusStr = action == 'Approve' ? 'disetujui' : 'ditolak';
+          await notificationsCol.insert({
+            'idTiket': ticket['idTiket'], // Menyimpan ID tiket untuk direferensikan
+            'idReceiver': ticket['idUser'], // Pemilik tiket
+            'type': 'status_update',
+            'message': 'Laporan Anda "${ticket['judulSingkat']}" telah $statusStr oleh Penanggung Jawab.',
+            'isRead': false,
+            'createdAt': DateTime.now(),
+          });
+        }
       }
 
       await fetchDashboardStats();
