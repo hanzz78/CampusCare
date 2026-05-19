@@ -39,17 +39,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
         child: SizedBox(
           height: 60,
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildBottomNavItem(
-                icon: Icons.home,
-                label: 'Home',
-                isActive: _selectedIndex == 0,
-                onTap: () {
-                  setState(() {
-                    _selectedIndex = 0;
-                  });
-                },
+              Expanded(
+                child: Center(
+                  child: _buildBottomNavItem(
+                    icon: Icons.home,
+                    label: 'Home',
+                    isActive: _selectedIndex == 0,
+                    onTap: () {
+                      setState(() {
+                        _selectedIndex = 0;
+                      });
+                    },
+                  ),
+                ),
               ),
               GestureDetector(
                 onTap: () {
@@ -65,7 +68,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   width: 70,
                   transform: Matrix4.translationValues(0.0, -15.0, 0.0),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF3B696D), // Dark Teal
+                    color: const Color(0xFF335C67), // Mengikuti palette color
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.white, width: 4),
                     boxShadow: [
@@ -79,15 +82,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: const Icon(Icons.camera_alt, color: Colors.white, size: 32),
                 ),
               ),
-              _buildBottomNavItem(
-                icon: Icons.person,
-                label: 'Profile',
-                isActive: _selectedIndex == 1,
-                onTap: () {
-                  setState(() {
-                    _selectedIndex = 1;
-                  });
-                },
+              Expanded(
+                child: Center(
+                  child: _buildBottomNavItem(
+                    icon: Icons.person,
+                    label: 'Profile',
+                    isActive: _selectedIndex == 1,
+                    onTap: () {
+                      setState(() {
+                        _selectedIndex = 1;
+                      });
+                    },
+                  ),
+                ),
               ),
             ],
           ),

@@ -67,7 +67,7 @@ class ReportFormProvider extends ChangeNotifier {
   }
 
   bool get isStep1Valid => _imagePath != null;
-  bool get isStep2Valid => _gedung != null;
+  bool get isStep2Valid => _gedung != null && _deskripsiLokasi.trim().isNotEmpty;
   bool get isStep3Valid =>
       _kategoriUtama != null &&
       _kategoriJenis != null &&

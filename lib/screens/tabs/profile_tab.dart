@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
+import '../../providers/admin_dashboard_provider.dart';
 import '../../models/tiket_model.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../login_screen.dart';
@@ -33,19 +34,43 @@ class _ProfileTabState extends State<ProfileTab> {
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
     final feedProvider = context.watch<FeedProvider>();
-    
+
     // Fallback data if user is not fully loaded or we only have email
     final String email = authProvider.email ?? 'mahasiswa@polban.ac.id';
-    final String name = authProvider.displayName ?? email.split('@')[0].toUpperCase();
-    final String role = authProvider.role == 'Admin' ? 'Administrator' : 'Mahasiswa';
-    
+    final String name =
+        authProvider.displayName ?? email.split('@')[0].toUpperCase();
+    final String role = authProvider.role == 'Admin'
+        ? 'Administrator'
+        : 'Mahasiswa';
+
     // Filter laporan milik user ini saja (untuk daftar laporan yang mungkin tersisa offline)
     final userId = authProvider.userId ?? '';
-    final myReports = feedProvider.reports.where((r) => r.idUser == userId).toList();
-    
-    // Gunakan userReportCount yang sudah dicache untuk mode offline
-    final String pelaporanCount = feedProvider.userReportCount.toString();
-    
+    final myReports = feedProvider.reports
+        .where((r) => r.idUser == userId)
+        .toList();
+
+    final isAdmin = role == 'Administrator' || role == 'Penanggung Jawab' || authProvider.role == 'Admin' || authProvider.role == 'Penanggung Jawab';
+
+    String leftStatCount = feedProvider.userReportCount.toString();
+    String leftStatLabel = 'Pelaporan';
+    String rightStatCount = feedProvider.userVoteCount.toString();
+    String rightStatLabel = 'Dukungan';
+
+    if (isAdmin) {
+      try {
+        final adminProvider = context.watch<AdminDashboardProvider>();
+        final adminReports = adminProvider.reports.where((t) => t.idPenanggungJawab == userId).toList();
+        leftStatCount = adminReports.where((t) => t.status == 'Approved').length.toString();
+        leftStatLabel = 'Disetujui';
+        rightStatCount = adminReports.where((t) => t.status == 'Rejected').length.toString();
+        rightStatLabel = 'Ditolak';
+      } catch (e) {
+        leftStatCount = '0';
+        leftStatLabel = 'Disetujui';
+        rightStatCount = '0';
+        rightStatLabel = 'Ditolak';
+      }
+    }
     return Container(
       color: const Color(0xFF2A5256), // Gunakan brand color Teal
       child: SafeArea(
@@ -54,13 +79,21 @@ class _ProfileTabState extends State<ProfileTab> {
           children: [
             const SizedBox(height: 16),
             // Header: Avatar, Name, Role, Stats
-            _buildHeader(context, name, role, pelaporanCount, feedProvider.userVoteCount.toString()),
+            _buildHeader(
+              context,
+              name,
+              role,
+              leftStatCount,
+              leftStatLabel,
+              rightStatCount,
+              rightStatLabel,
+            ),
             const SizedBox(height: 24),
             // Konten Bawah (Lengkungan)
             Expanded(
               child: Container(
                 decoration: const BoxDecoration(
-                  color: Color(0xFFF8FAFC), // Cleaner background
+                  color: Color(0xFFF8F3EC), // Cream background matching design
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
                 child: RefreshIndicator(
@@ -68,175 +101,244 @@ class _ProfileTabState extends State<ProfileTab> {
                   onRefresh: () async {
                     final auth = context.read<AuthProvider>();
                     if (auth.userId != null) {
-                      await context.read<FeedProvider>().fetchUserStats(auth.userId!);
+                      await context.read<FeedProvider>().fetchUserStats(
+                        auth.userId!,
+                      );
                     }
                     await context.read<FeedProvider>().fetchReports();
                   },
                   child: SingleChildScrollView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ValueListenableBuilder(
-                        valueListenable: Hive.box('offline_reports').listenable(),
-                        builder: (context, Box box, _) {
-                          if (box.isEmpty) return const SizedBox.shrink();
-
-                          final offlineReports = [];
-                          for (int i = 0; i < box.length; i++) {
-                            final data = box.getAt(i);
-                            if (data is Map) {
-                              offlineReports.add(data);
-                            }
-                          }
-
-                          return Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              _buildSectionTitle('Laporan Offline (Menunggu Sinyal)'),
-                              _buildOfflineReportsCard(offlineReports),
-                              const SizedBox(height: 24),
-                            ],
-                          );
-                        },
-                      ),
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const ReportHistoryScreen(),
-                            ),
-                          );
-                        },
-                        child: _buildSectionTitle('My Reports'),
-                      ),
-                      _buildMyReportsCard(myReports),
-                      const SizedBox(height: 24),
-                      _buildSectionTitle('Account'),
-                      _buildMenuCard([
-                        _buildMenuRow(
-                          Icons.person_outline_rounded,
-                          'Edit Profile',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const EditProfileScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                      ]),
-                      const SizedBox(height: 24),
-                      _buildSectionTitle('Preferences'),
-                      _buildMenuCard([
-                        _buildMenuRow(
-                          Icons.notifications_none_rounded,
-                          'Pengaturan Notifikasi',
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const NotificationSettingsScreen(),
-                              ),
-                            );
-                          },
-                        ),
-                        const Divider(height: 1, indent: 48),
-                        _buildMenuRow(
-                          Icons.info_outline_rounded,
-                          'Tentang Aplikasi',
-                          onTap: () {
-                            showDialog(
-                              context: context,
-                              builder: (dialogContext) => AlertDialog(
-                                title: const Text(
-                                  'Tentang CampusCare',
-                                  style: TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                content: const Text(
-                                  'CampusCare v1.0.0\n\nAplikasi untuk melaporkan dan memantau sarana prasarana kampus.\n\n© 2026 CampusCare. Hak cipta dilindungi.',
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(dialogContext),
-                                    child: const Text('Tutup', style: TextStyle(color: Color(0xFF2A5256), fontWeight: FontWeight.bold)),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 24,
+                      vertical: 32,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (!isAdmin) ...[
+                          ValueListenableBuilder(
+                            valueListenable: Hive.box(
+                              'offline_reports',
+                            ).listenable(),
+                            builder: (context, Box box, _) {
+                              if (box.isEmpty) return const SizedBox.shrink();
+  
+                              final offlineReports = [];
+                              for (int i = 0; i < box.length; i++) {
+                                final data = box.getAt(i);
+                                if (data is Map) {
+                                  offlineReports.add(data);
+                                }
+                              }
+  
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildSectionTitle(
+                                    'Laporan Offline (Menunggu Sinyal)',
                                   ),
+                                  _buildOfflineReportsCard(offlineReports),
+                                  const SizedBox(height: 24),
                                 ],
-                              ),
-                            );
-                          },
-                        ),
-                      ]),
-                      const SizedBox(height: 48),
-                      // Tombol Sign Out
-                      SizedBox(
-                        width: double.infinity,
-                        height: 54,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (dialogContext) => AlertDialog(
-                                title: const Text('Konfirmasi', style: TextStyle(fontWeight: FontWeight.bold)),
-                                content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(dialogContext),
-                                    child: const Text('Batal', style: TextStyle(color: Colors.grey)),
-                                  ),
-                                  ElevatedButton(
-                                    onPressed: () {
-                                      Navigator.pop(dialogContext); // Tutup dialog
-                                      context.read<AuthProvider>().logout();
-                                      Navigator.pushAndRemoveUntil(
-                                        context,
-                                        MaterialPageRoute(builder: (context) => const LoginScreen()),
-                                        (route) => false,
-                                      );
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.red.shade50,
-                                      elevation: 0,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              );
+                            },
+                          ),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ReportHistoryScreen(),
+                                ),
+                              );
+                            },
+                            child: _buildSectionTitle('My Reports'),
+                          ),
+                          _buildMyReportsCard(myReports),
+                          const SizedBox(height: 24),
+                        ],
+                        _buildSectionTitle('Account'),
+                        _buildMenuCard([
+                          _buildMenuRow(
+                            Icons.person_outline_rounded,
+                            'Edit Profile',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const EditProfileScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                        ]),
+                        const SizedBox(height: 24),
+                        _buildSectionTitle('Preferences'),
+                        _buildMenuCard([
+                          _buildMenuRow(
+                            Icons.notifications_none_rounded,
+                            'Pengaturan Notifikasi',
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const NotificationSettingsScreen(),
+                                ),
+                              );
+                            },
+                          ),
+                          const Divider(height: 1, indent: 48),
+                          _buildMenuRow(
+                            Icons.info_outline_rounded,
+                            'Tentang Aplikasi',
+                            onTap: () {
+                              showDialog(
+                                context: context,
+                                builder: (dialogContext) => AlertDialog(
+                                  title: const Text(
+                                    'Tentang CampusCare',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
                                     ),
-                                    child: Text('Ya, Keluar', style: TextStyle(color: Colors.red.shade700, fontWeight: FontWeight.bold)),
                                   ),
-                                ],
-                              ),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red.shade50,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                                  content: const Text(
+                                    'CampusCare v1.0.0\n\nAplikasi untuk melaporkan dan memantau sarana prasarana kampus.\n\n© 2026 CampusCare. Hak cipta dilindungi.',
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dialogContext),
+                                      child: const Text(
+                                        'Tutup',
+                                        style: TextStyle(
+                                          color: Color(0xFF2A5256),
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
                           ),
-                          child: Text(
-                            'Sign Out',
-                            style: TextStyle(color: Colors.red.shade700, fontSize: 16, fontWeight: FontWeight.bold),
+                        ]),
+                        const SizedBox(height: 48),
+                        // Tombol Sign Out
+                        SizedBox(
+                          width: double.infinity,
+                          height: 54,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (dialogContext) => AlertDialog(
+                                  title: const Text(
+                                    'Konfirmasi',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  content: const Text(
+                                    'Apakah Anda yakin ingin keluar dari aplikasi?',
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () =>
+                                          Navigator.pop(dialogContext),
+                                      child: const Text(
+                                        'Batal',
+                                        style: TextStyle(color: Color(0xFF7A9BA0)),
+                                      ),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () {
+                                        Navigator.pop(
+                                          dialogContext,
+                                        ); // Tutup dialog
+                                        context.read<AuthProvider>().logout();
+                                        Navigator.pushAndRemoveUntil(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (context) =>
+                                                const LoginScreen(),
+                                          ),
+                                          (route) => false,
+                                        );
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.red.shade50,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(
+                                            8,
+                                          ),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        'Ya, Keluar',
+                                        style: TextStyle(
+                                          color: Colors.red.shade700,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFDFB6B2),
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                side: const BorderSide(
+                                  color: Color(0xFFC79E9A),
+                                  width: 1,
+                                ),
+                              ),
+                            ),
+                            child: const Text(
+                              'Sign Out',
+                              style: TextStyle(
+                                color: Color(0xFF9E2A2B),
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(height: 80),
-                    ],
-                  ),
-                ), // SingleChildScrollView
-              ), // RefreshIndicator
-            ), // Container
-          ), // Expanded
+                        const SizedBox(height: 80),
+                      ],
+                    ),
+                  ), // SingleChildScrollView
+                ), // RefreshIndicator
+              ), // Container
+            ), // Expanded
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHeader(BuildContext context, String name, String role, String pelaporanCount, String dukunganCount) {
+  Widget _buildHeader(
+    BuildContext context,
+    String name,
+    String role,
+    String leftStatCount,
+    String leftStatLabel,
+    String rightStatCount,
+    String rightStatLabel,
+  ) {
     final profileImageUrl = context.watch<AuthProvider>().profileImageUrl;
 
     return Column(
@@ -249,7 +351,11 @@ class _ProfileTabState extends State<ProfileTab> {
             color: Colors.white,
             shape: BoxShape.circle,
             boxShadow: [
-              BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10, offset: const Offset(0, 5))
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
             ],
             border: Border.all(color: Colors.white.withOpacity(0.2), width: 4),
             image: profileImageUrl != null && profileImageUrl.isNotEmpty
@@ -260,18 +366,33 @@ class _ProfileTabState extends State<ProfileTab> {
                 : null,
           ),
           child: profileImageUrl == null || profileImageUrl.isEmpty
-              ? const Center(child: Icon(Icons.person_rounded, size: 50, color: Color(0xFF2A5256)))
+              ? const Center(
+                  child: Icon(
+                    Icons.person_rounded,
+                    size: 50,
+                    color: Color(0xFF2A5256),
+                  ),
+                )
               : null,
         ),
         const SizedBox(height: 16),
         Text(
           name,
-          style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800, letterSpacing: -0.5),
+          style: const TextStyle(
+            color: Color(0xFFFFF3B0),
+            fontSize: 20,
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           'Polban • $role',
-          style: const TextStyle(color: Colors.white70, fontSize: 14, fontWeight: FontWeight.w500),
+          style: const TextStyle(
+            color: Color(0xFFD9CFA8),
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         const SizedBox(height: 24),
         // Stats Box
@@ -287,9 +408,13 @@ class _ProfileTabState extends State<ProfileTab> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildStatItem(pelaporanCount, 'Pelaporan'),
-                Container(width: 1, color: Colors.white.withOpacity(0.1), margin: const EdgeInsets.symmetric(vertical: 8)),
-                _buildStatItem(dukunganCount, 'Dukungan'),
+                _buildStatItem(leftStatCount, leftStatLabel),
+                Container(
+                  width: 1,
+                  color: Colors.white.withOpacity(0.1),
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                ),
+                _buildStatItem(rightStatCount, rightStatLabel),
               ],
             ),
           ),
@@ -302,9 +427,23 @@ class _ProfileTabState extends State<ProfileTab> {
     return Expanded(
       child: Column(
         children: [
-          Text(count, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w900)),
+          Text(
+            count,
+            style: const TextStyle(
+              color: Color(0xFFFFF3B0),
+              fontSize: 20,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(label, style: const TextStyle(color: Colors.white60, fontSize: 12, fontWeight: FontWeight.w600)),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Color(0xFFD9CFA8),
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -318,10 +457,18 @@ class _ProfileTabState extends State<ProfileTab> {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w800, color: Color(0xFF1E293B)),
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF2A5256),
+            ),
           ),
           if (title == 'My Reports')
-            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.grey, size: 14),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Color(0xFF7A9BA0),
+              size: 14,
+            ),
         ],
       ),
     );
@@ -339,9 +486,16 @@ class _ProfileTabState extends State<ProfileTab> {
         ),
         child: Column(
           children: [
-            Icon(Icons.note_alt_outlined, color: Colors.grey.shade300, size: 40),
+            Icon(
+              Icons.note_alt_outlined,
+              color: const Color(0xFFB2CCCE),
+              size: 40,
+            ),
             const SizedBox(height: 12),
-            const Text('Belum ada laporan', style: TextStyle(color: Colors.grey, fontSize: 14)),
+            const Text(
+              'Belum ada laporan',
+              style: TextStyle(color: Color(0xFF7A9BA0), fontSize: 14),
+            ),
           ],
         ),
       );
@@ -353,24 +507,30 @@ class _ProfileTabState extends State<ProfileTab> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
-        ],
+        border: Border.all(color: const Color(0xFFD0D7D8)),
       ),
       child: Column(
         children: displayReports.asMap().entries.map((entry) {
           final index = entry.key;
           final report = entry.value;
           final isLast = index == displayReports.length - 1;
-          
+
           return Column(
             children: [
               _buildReportRow(
-                report.judulSingkat, 
-                '${report.kategori.utama} • ${report.lokasi.gedung}', 
-                report.kategori.utama == 'Sarpras' ? const Color(0xFF2A5256) : const Color(0xFFE69B3A)
+                report.judulSingkat,
+                '${report.kategori.utama} • ${report.lokasi.gedung}',
+                report.kategori.utama == 'Sarpras'
+                    ? const Color(0xFF2A5256)
+                    : const Color(0xFFE69B3A),
               ),
-              if (!isLast) Divider(height: 1, color: Colors.grey.shade100, indent: 20, endIndent: 20),
+              if (!isLast)
+                Divider(
+                  height: 1,
+                  color: Colors.grey.shade100,
+                  indent: 20,
+                  endIndent: 20,
+                ),
             ],
           );
         }).toList(),
@@ -390,18 +550,24 @@ class _ProfileTabState extends State<ProfileTab> {
           final index = entry.key;
           final report = entry.value as Map;
           final isLast = index == reports.length - 1;
-          
+
           final kategoriUtama = report['kategori']?['utama'] ?? 'Lainnya';
           final gedung = report['lokasi']?['gedung'] ?? 'Tidak Diketahui';
-          
+
           return Column(
             children: [
               _buildReportRow(
-                report['judulSingkat'] ?? 'Tanpa Judul', 
-                '$kategoriUtama • $gedung', 
+                report['judulSingkat'] ?? 'Tanpa Judul',
+                '$kategoriUtama • $gedung',
                 Colors.orange,
               ),
-              if (!isLast) Divider(height: 1, color: Colors.orange.shade200, indent: 20, endIndent: 20),
+              if (!isLast)
+                Divider(
+                  height: 1,
+                  color: Colors.orange.shade200,
+                  indent: 20,
+                  endIndent: 20,
+                ),
             ],
           );
         }).toList(),
@@ -417,20 +583,36 @@ class _ProfileTabState extends State<ProfileTab> {
           Container(
             width: 10,
             height: 10,
-            decoration: BoxDecoration(color: bulletColor, shape: BoxShape.circle),
+            decoration: BoxDecoration(
+              color: bulletColor,
+              shape: BoxShape.circle,
+            ),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1E293B))),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 15,
+                    color: Color(0xFF2A5256),
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(subtitle, style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                Text(
+                  subtitle,
+                  style: const TextStyle(
+                    color: Color(0xFF7A9BA0),
+                    fontSize: 13,
+                  ),
+                ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right_rounded, color: Colors.grey, size: 20),
+          // Hapus ikon panah di setiap item My Reports (tetap pertahankan panah pada judul)
         ],
       ),
     );
@@ -441,15 +623,17 @@ class _ProfileTabState extends State<ProfileTab> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 10, offset: const Offset(0, 4))
-        ],
+        border: Border.all(color: const Color(0xFFD0D7D8)),
       ),
       child: Column(children: children),
     );
   }
 
-  Widget _buildMenuRow(IconData icon, String title, {required VoidCallback onTap}) {
+  Widget _buildMenuRow(
+    IconData icon,
+    String title, {
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(20),
@@ -459,8 +643,21 @@ class _ProfileTabState extends State<ProfileTab> {
           children: [
             Icon(icon, size: 22, color: const Color(0xFF2A5256)),
             const SizedBox(width: 16),
-            Expanded(child: Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15, color: Color(0xFF1E293B)))),
-            const Icon(Icons.arrow_forward_ios_rounded, color: Color(0xFFCBD5E1), size: 14),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 15,
+                  color: Color(0xFF2A5256),
+                ),
+              ),
+            ),
+            const Icon(
+              Icons.arrow_forward_ios_rounded,
+              color: Color(0xFF7A9BA0),
+              size: 14,
+            ),
           ],
         ),
       ),

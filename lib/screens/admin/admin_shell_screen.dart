@@ -23,55 +23,20 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F3EC),
-      appBar: AppBar(
-        title: Text(
-          _selectedIndex == 0 
-            ? 'Dashboard Penanggung Jawab' 
-            : _selectedIndex == 1 
-              ? 'Menunggu Tindakan' 
-              : _selectedIndex == 2
-                ? 'Selesai Direview'
-                : 'Profil Saya',
-          style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18)
-        ),
-        backgroundColor: const Color(0xFF3B696D), // Dark Teal
-        iconTheme: const IconThemeData(color: Colors.white),
-        actions: [
-          // Global Logout Button in AppBar
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              final confirm = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Keluar?', style: TextStyle(fontWeight: FontWeight.bold)),
-                  content: const Text('Apakah Anda yakin ingin keluar dari aplikasi?'),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Batal', style: TextStyle(color: Colors.grey))),
-                    ElevatedButton(
-                      onPressed: () => Navigator.pop(context, true), 
-                      style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFE2BDBA), elevation: 0),
-                      child: const Text('Keluar', style: TextStyle(color: Color(0xFF8A2E2E), fontWeight: FontWeight.bold)),
-                    ),
-                  ],
-                ),
-              );
-
-              if (confirm == true) {
-                await authProvider.logout();
-                if (context.mounted) {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (context) => const LoginScreen()),
-                    (route) => false,
-                  );
-                }
-              }
-            },
-          ),
-        ],
-      ),
+      appBar: _selectedIndex == 0
+          ? null
+          : AppBar(
+              title: Text(
+                _selectedIndex == 1
+                    ? 'Menunggu Tindakan'
+                    : _selectedIndex == 2
+                        ? 'Selesai Direview'
+                        : 'Profil Saya',
+                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 18),
+              ),
+              backgroundColor: const Color(0xFF3B696D),
+              iconTheme: const IconThemeData(color: Colors.white),
+            ),
       body: IndexedStack(
         index: _selectedIndex,
         children: const [

@@ -5,32 +5,35 @@ class TiketModel {
   final String idTiket; // 'idTiket'
   final String idUser; // 'idUser'
   final String emailUser; // 'emailUser'
-  
+
   final String judulSingkat; // 'judulSingkat'
   final String deskripsiTiket; // 'deskripsiTiket'
   final String? deskripsiLokasi; // 'deskripsiLokasi'
-  
+
   final KategoriModel kategori; // 'kategori'
   final LokasiModel lokasi; // 'lokasi'
-  
+
   final List<String> buktiVisual; // 'buktiVisual'
-  
-  final String status; // 'status' (Menunggu Verifikasi, Approved, Rejected, Documented)
-  final String? tingkatUrgensi; // 'tingkatUrgensi' (Prioritas Tinggi, Prioritas Sedang, Prioritas Rendah)
-  
+
+  final String
+  status; // 'status' (Menunggu Verifikasi, Approved, Rejected, Documented)
+  final String?
+  tingkatUrgensi; // 'tingkatUrgensi' (Prioritas Tinggi, Prioritas Sedang, Prioritas Rendah)
+
   final DateTime tanggalPembuatan; // 'tanggalPembuatan'
   final DateTime tanggalPengajuan; // 'tanggalPengajuan'
   final DateTime? tanggalVerifikasi; // 'tanggalVerifikasi'
   final DateTime? tanggalApproval; // 'tanggalApproval'
   final DateTime? tanggalRejection; // 'tanggalRejection'
   final DateTime? tanggalExport; // 'tanggalExport'
-  
+
   final String? alasanRejection; // 'alasanRejection'
   final String? catatanPJ; // 'catatanPJ'
-  
+  final String? idPenanggungJawab; // 'idPenanggungJawab'
+
   final int jumlahVote; // 'jumlahVote'
   final List<CommentModel> comments; // 'comments'
-  
+
   final DateTime createdAt; // 'createdAt'
   final DateTime updatedAt; // 'updatedAt'
   final DateTime? deletedAt; // 'deletedAt'
@@ -56,6 +59,7 @@ class TiketModel {
     this.tanggalExport,
     this.alasanRejection,
     this.catatanPJ,
+    this.idPenanggungJawab,
     required this.jumlahVote,
     required this.comments,
     required this.createdAt,
@@ -85,8 +89,10 @@ class TiketModel {
       tanggalExport: _parseNullableDate(json['tanggalExport']),
       alasanRejection: json['alasanRejection'] as String?,
       catatanPJ: json['catatanPJ'] as String?,
+      idPenanggungJawab: _parseObjectId(json['idPenanggungJawab']),
       jumlahVote: json['jumlahVote'] as int? ?? 0,
-      comments: (json['comments'] as List<dynamic>?)
+      comments:
+          (json['comments'] as List<dynamic>?)
               ?.map((e) => CommentModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -117,6 +123,7 @@ class TiketModel {
       'tanggalExport': tanggalExport?.toIso8601String(),
       'alasanRejection': alasanRejection,
       'catatanPJ': catatanPJ,
+      if (idPenanggungJawab != null) 'idPenanggungJawab': idPenanggungJawab,
       'jumlahVote': jumlahVote,
       'comments': comments.map((e) => e.toJson()).toList(),
       'createdAt': createdAt.toIso8601String(),
@@ -128,7 +135,7 @@ class TiketModel {
   }
 
   String get lokasiDisplay {
-    final base = lokasi.lantai > 0 
+    final base = lokasi.lantai > 0
         ? '${lokasi.gedung}, Lt ${lokasi.lantai}'
         : lokasi.gedung;
     if (deskripsiLokasi != null && deskripsiLokasi!.isNotEmpty) {
@@ -184,7 +191,11 @@ class LokasiModel {
   final int lantai;
   final String ruangan;
 
-  LokasiModel({required this.gedung, required this.lantai, required this.ruangan});
+  LokasiModel({
+    required this.gedung,
+    required this.lantai,
+    required this.ruangan,
+  });
 
   factory LokasiModel.fromJson(Map<String, dynamic> json) {
     return LokasiModel(
@@ -194,7 +205,11 @@ class LokasiModel {
     );
   }
 
-  Map<String, dynamic> toJson() => {'gedung': gedung, 'lantai': lantai, 'ruangan': ruangan};
+  Map<String, dynamic> toJson() => {
+    'gedung': gedung,
+    'lantai': lantai,
+    'ruangan': ruangan,
+  };
 }
 
 class CommentModel {

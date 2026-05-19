@@ -11,7 +11,7 @@ class AdminAllReportsTab extends StatefulWidget {
 }
 
 class _AdminAllReportsTabState extends State<AdminAllReportsTab> {
-  bool _isFilterExpanded = true;
+  bool _isFilterExpanded = false;
 
   @override
   Widget build(BuildContext context) {
@@ -247,7 +247,7 @@ class _AdminAllReportsTabState extends State<AdminAllReportsTab> {
                                       decoration: BoxDecoration(color: Colors.orange.shade50, borderRadius: BorderRadius.circular(20), border: Border.all(color: Colors.orange.shade200)),
                                       child: Row(
                                         children: [
-                                          const Icon(Icons.local_fire_department, size: 16, color: Colors.orange),
+                                          const Icon(Icons.arrow_upward_rounded, size: 16, color: Colors.orange),
                                           const SizedBox(width: 4),
                                           Text('${tiket.jumlahVote} Dukungan', style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.orange, fontSize: 12)),
                                         ],

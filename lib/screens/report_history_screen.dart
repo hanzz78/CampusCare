@@ -36,17 +36,17 @@ class ReportHistoryScreen extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.note_outlined,
                     size: 64,
-                    color: Colors.grey.shade400,
+                    color: Color(0xFFB2CCCE),
                   ),
                   const SizedBox(height: 16),
-                  Text(
+                  const Text(
                     'Tidak ada laporan',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey.shade600,
+                      color: Color(0xFF7A9BA0),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -150,7 +150,7 @@ class ReportHistoryScreen extends StatelessWidget {
                             ),
                             Text(
                               feedProvider.getTimeAgo(report.createdAt),
-                              style: TextStyle(fontSize: 11, color: Colors.grey.shade400),
+                              style: const TextStyle(fontSize: 11, color: Color(0xFF7A9BA0)),
                             ),
                           ],
                         ),
@@ -160,7 +160,7 @@ class ReportHistoryScreen extends StatelessWidget {
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 15,
-                            color: Color(0xFF1E293B),
+                            color: Color(0xFF2A5256),
                             height: 1.2,
                           ),
                           maxLines: 1,
@@ -169,12 +169,12 @@ class ReportHistoryScreen extends StatelessWidget {
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Icons.location_on_rounded, size: 12, color: Colors.grey.shade400),
+                            const Icon(Icons.location_on_rounded, size: 12, color: Color(0xFF7A9BA0)),
                             const SizedBox(width: 4),
                             Expanded(
                               child: Text(
                                 report.lokasiDisplay,
-                                style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+                                style: const TextStyle(fontSize: 12, color: Color(0xFF7A9BA0)),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -184,9 +184,9 @@ class ReportHistoryScreen extends StatelessWidget {
                         const SizedBox(height: 12),
                         Row(
                           children: [
-                            _buildMiniStat(Icons.local_fire_department_rounded, report.jumlahVote.toString(), Colors.red.shade400),
+                            _buildMiniStat(Icons.arrow_upward_rounded, report.jumlahVote.toString(), Colors.red.shade400),
                             const SizedBox(width: 12),
-                            _buildMiniStat(Icons.chat_bubble_outline_rounded, report.comments.length.toString(), Colors.blueGrey.shade400),
+                            _buildMiniStat(Icons.chat_bubble_outline_rounded, report.comments.length.toString(), const Color(0xFF7A9BA0)),
                           ],
                         ),
                       ],
@@ -208,7 +208,7 @@ class ReportHistoryScreen extends StatelessWidget {
         const SizedBox(width: 4),
         Text(
           value,
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.grey.shade600),
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF7A9BA0)),
         ),
       ],
     );

@@ -218,26 +218,15 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
                                           formProvider.resetForm();
                                           Navigator.pop(context);
                                         } catch (e) {
-                                          if (e.toString().contains("OFFLINE_SAVED")) {
-                                            ScaffoldMessenger.of(context).showSnackBar(
-                                              const SnackBar(
-                                                content: Text('Koneksi terputus. Laporan disimpan secara offline dan akan dikirim otomatis saat online!'),
-                                                backgroundColor: Colors.orange,
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Gagal mengirim laporan: $e',
                                               ),
-                                            );
-                                            context.read<ReportFormProvider>().resetForm();
-                                            Navigator.pop(context);
-                                          } else {
-                                            ScaffoldMessenger.of(
-                                              context,
-                                            ).showSnackBar(
-                                              SnackBar(
-                                                content: Text(
-                                                  'Gagal mengirim laporan: $e',
-                                                ),
-                                              ),
-                                            );
-                                          }
+                                            ),
+                                          );
                                         } finally {
                                           if (mounted) {
                                             setState(() {
@@ -571,7 +560,7 @@ class _ReportFormWizardScreenState extends State<ReportFormWizardScreen> {
           ),
           const SizedBox(height: 32),
           const Text(
-            'Keterangan Tempat *',
+            'Keterangan Tempat (opsional)',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,

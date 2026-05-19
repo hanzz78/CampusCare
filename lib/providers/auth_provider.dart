@@ -21,6 +21,8 @@ class AuthProvider extends ChangeNotifier {
   String? _profileImageUrl;
   String? _cachedEmail;
   String? _cachedName;
+  String? _cachedLocation;
+  String? _cachedPhone;
 
   // Getters supaya bisa dibaca oleh UI
   bool get isLoading => _isLoading;
@@ -30,6 +32,8 @@ class AuthProvider extends ChangeNotifier {
   String? get profileImageUrl => _profileImageUrl;
   String? get email => _auth.currentUser?.email ?? _cachedEmail;
   String? get displayName => _auth.currentUser?.displayName ?? _cachedName;
+  String? get location => _cachedLocation;
+  String? get phone => _cachedPhone;
 
   // Cek apakah user sudah login sebelumnya saat aplikasi dibuka
   Future<void> checkSession() async {
@@ -40,6 +44,8 @@ class AuthProvider extends ChangeNotifier {
       _userId = prefs.getString('userId');
       _cachedEmail = prefs.getString('cachedEmail');
       _cachedName = prefs.getString('cachedName');
+      _cachedLocation = prefs.getString('lokasiGedung');
+      _cachedPhone = prefs.getString('telepon');
       final savedProfileImg = prefs.getString('profileImageUrl');
       if (savedProfileImg != null && savedProfileImg.isNotEmpty) {
         _profileImageUrl = savedProfileImg;
@@ -194,12 +200,21 @@ class AuthProvider extends ChangeNotifier {
     }
     
     final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    await prefs.remove('isLoggedIn');
+    await prefs.remove('userRole');
+    await prefs.remove('userId');
+    await prefs.remove('profileImageUrl');
+    await prefs.remove('cachedEmail');
+    await prefs.remove('cachedName');
+    await prefs.remove('lokasiGedung');
+    await prefs.remove('telepon');
     
     _isLoggedIn = false;
     _role = 'user';
     _userId = null;
     _profileImageUrl = null;
+    _cachedLocation = null;
+    _cachedPhone = null;
     notifyListeners();
   }
 
@@ -233,6 +248,47 @@ class AuthProvider extends ChangeNotifier {
 
     } catch (e) {
       debugPrint("Error updating profile image: $e");
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Fungsi Baru: Update Data Profil
+  Future<void> updateProfileData(String name, String location, String phone) async {
+    if (_userId == null) throw Exception("User ID tidak ditemukan");
+    
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final updateData = {
+        'nama': name,
+        'lokasiGedung': location,
+        'telepon': phone,
+        'updatedAt': DateTime.now(),
+      };
+
+      // Update Firebase Auth displayName
+      try {
+        await _auth.currentUser?.updateDisplayName(name);
+      } catch (e) {
+        debugPrint("Error updating firebase display name: $e");
+      }
+
+      // Update MongoDB
+      await MongoService().updateUser(_userId!, updateData);
+
+      // Update local state & SharedPreferences
+      _cachedName = name;
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('cachedName', name);
+      await prefs.setString('lokasiGedung', location);
+      await prefs.setString('telepon', phone);
+
+    } catch (e) {
+      debugPrint("Error updating profile data: $e");
       rethrow;
     } finally {
       _isLoading = false;
