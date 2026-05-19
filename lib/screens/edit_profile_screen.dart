@@ -14,8 +14,6 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _emailController;
-  late TextEditingController _locationController;
-  late TextEditingController _phoneController;
   
   File? _selectedImage;
   bool _isUploadingImage = false;
@@ -26,16 +24,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final authProvider = context.read<AuthProvider>();
     _nameController = TextEditingController(text: authProvider.displayName ?? '');
     _emailController = TextEditingController(text: authProvider.email ?? '');
-    _locationController = TextEditingController(text: authProvider.location ?? 'Gedung D');
-    _phoneController = TextEditingController(text: authProvider.phone ?? '');
   }
 
   @override
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
-    _locationController.dispose();
-    _phoneController.dispose();
     super.dispose();
   }
 
@@ -167,23 +161,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               icon: Icons.email,
               hint: 'Email tidak dapat diubah',
               enabled: false,
-            ),
-            const SizedBox(height: 16),
-
-            _buildFormSection(
-              label: 'Lokasi Gedung',
-              controller: _locationController,
-              icon: Icons.location_on,
-              hint: 'Pilih lokasi kampus',
-            ),
-            const SizedBox(height: 16),
-
-            _buildFormSection(
-              label: 'Nomor Telepon',
-              controller: _phoneController,
-              icon: Icons.phone,
-              hint: 'Masukkan nomor telepon Anda',
-              keyboardType: TextInputType.phone,
             ),
             const SizedBox(height: 32),
 
@@ -333,8 +310,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       await context.read<AuthProvider>().updateProfileData(
         _nameController.text.trim(),
-        _locationController.text.trim(),
-        _phoneController.text.trim(),
       );
 
       // Tutup loading dialog

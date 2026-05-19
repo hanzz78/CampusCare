@@ -256,7 +256,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Fungsi Baru: Update Data Profil
-  Future<void> updateProfileData(String name, String location, String phone) async {
+  Future<void> updateProfileData(String name) async {
     if (_userId == null) throw Exception("User ID tidak ditemukan");
     
     _isLoading = true;
@@ -265,8 +265,6 @@ class AuthProvider extends ChangeNotifier {
     try {
       final updateData = {
         'nama': name,
-        'lokasiGedung': location,
-        'telepon': phone,
         'updatedAt': DateTime.now(),
       };
 
@@ -284,8 +282,6 @@ class AuthProvider extends ChangeNotifier {
       _cachedName = name;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('cachedName', name);
-      await prefs.setString('lokasiGedung', location);
-      await prefs.setString('telepon', phone);
 
     } catch (e) {
       debugPrint("Error updating profile data: $e");
