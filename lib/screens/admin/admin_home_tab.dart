@@ -442,6 +442,20 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
       child: BarChart(BarChartData(
         alignment: BarChartAlignment.spaceAround,
         maxY: maxY, minY: 0,
+        barTouchData: BarTouchData(
+          enabled: true,
+          touchTooltipData: BarTouchTooltipData(
+            getTooltipColor: (_) => const Color(0xFF335C67),
+            tooltipPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            tooltipMargin: 8,
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              return BarTooltipItem(
+                rod.toY.toInt().toString(),
+                const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+              );
+            },
+          ),
+        ),
         gridData: FlGridData(show: true, drawVerticalLine: false, horizontalInterval: 1, getDrawingHorizontalLine: (_) => FlLine(color: const Color(0xFFF0ECE4), strokeWidth: 1)),
         borderData: FlBorderData(show: true, border: const Border(left: BorderSide(color: Color(0xFFDCD5C9), width: 1), bottom: BorderSide(color: Color(0xFFDCD5C9), width: 1), top: BorderSide.none, right: BorderSide.none)),
         titlesData: FlTitlesData(
