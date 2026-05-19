@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/feed_provider.dart';
+import '../../providers/admin_dashboard_provider.dart';
 import '../../models/tiket_model.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import '../login_screen.dart';
@@ -48,9 +49,28 @@ class _ProfileTabState extends State<ProfileTab> {
         .where((r) => r.idUser == userId)
         .toList();
 
-    // Gunakan userReportCount yang sudah dicache untuk mode offline
-    final String pelaporanCount = feedProvider.userReportCount.toString();
+    final isAdmin = role == 'Administrator' || role == 'Penanggung Jawab' || authProvider.role == 'Admin' || authProvider.role == 'Penanggung Jawab';
 
+    String leftStatCount = feedProvider.userReportCount.toString();
+    String leftStatLabel = 'Pelaporan';
+    String rightStatCount = feedProvider.userVoteCount.toString();
+    String rightStatLabel = 'Dukungan';
+
+    if (isAdmin) {
+      try {
+        final adminProvider = context.watch<AdminDashboardProvider>();
+        final adminReports = adminProvider.reports.where((t) => t.idPenanggungJawab == userId).toList();
+        leftStatCount = adminReports.where((t) => t.status == 'Approved').length.toString();
+        leftStatLabel = 'Disetujui';
+        rightStatCount = adminReports.where((t) => t.status == 'Rejected').length.toString();
+        rightStatLabel = 'Ditolak';
+      } catch (e) {
+        leftStatCount = '0';
+        leftStatLabel = 'Disetujui';
+        rightStatCount = '0';
+        rightStatLabel = 'Ditolak';
+      }
+    }
     return Container(
       color: const Color(0xFF2A5256), // Gunakan brand color Teal
       child: SafeArea(
@@ -63,8 +83,10 @@ class _ProfileTabState extends State<ProfileTab> {
               context,
               name,
               role,
-              pelaporanCount,
-              feedProvider.userVoteCount.toString(),
+              leftStatCount,
+              leftStatLabel,
+              rightStatCount,
+              rightStatLabel,
             ),
             const SizedBox(height: 24),
             // Konten Bawah (Lengkungan)
@@ -94,47 +116,49 @@ class _ProfileTabState extends State<ProfileTab> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        ValueListenableBuilder(
-                          valueListenable: Hive.box(
-                            'offline_reports',
-                          ).listenable(),
-                          builder: (context, Box box, _) {
-                            if (box.isEmpty) return const SizedBox.shrink();
-
-                            final offlineReports = [];
-                            for (int i = 0; i < box.length; i++) {
-                              final data = box.getAt(i);
-                              if (data is Map) {
-                                offlineReports.add(data);
+                        if (!isAdmin) ...[
+                          ValueListenableBuilder(
+                            valueListenable: Hive.box(
+                              'offline_reports',
+                            ).listenable(),
+                            builder: (context, Box box, _) {
+                              if (box.isEmpty) return const SizedBox.shrink();
+  
+                              final offlineReports = [];
+                              for (int i = 0; i < box.length; i++) {
+                                final data = box.getAt(i);
+                                if (data is Map) {
+                                  offlineReports.add(data);
+                                }
                               }
-                            }
-
-                            return Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildSectionTitle(
-                                  'Laporan Offline (Menunggu Sinyal)',
+  
+                              return Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  _buildSectionTitle(
+                                    'Laporan Offline (Menunggu Sinyal)',
+                                  ),
+                                  _buildOfflineReportsCard(offlineReports),
+                                  const SizedBox(height: 24),
+                                ],
+                              );
+                            },
+                          ),
+                          InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const ReportHistoryScreen(),
                                 ),
-                                _buildOfflineReportsCard(offlineReports),
-                                const SizedBox(height: 24),
-                              ],
-                            );
-                          },
-                        ),
-                        InkWell(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    const ReportHistoryScreen(),
-                              ),
-                            );
-                          },
-                          child: _buildSectionTitle('My Reports'),
-                        ),
-                        _buildMyReportsCard(myReports),
-                        const SizedBox(height: 24),
+                              );
+                            },
+                            child: _buildSectionTitle('My Reports'),
+                          ),
+                          _buildMyReportsCard(myReports),
+                          const SizedBox(height: 24),
+                        ],
                         _buildSectionTitle('Account'),
                         _buildMenuCard([
                           _buildMenuRow(
@@ -310,8 +334,10 @@ class _ProfileTabState extends State<ProfileTab> {
     BuildContext context,
     String name,
     String role,
-    String pelaporanCount,
-    String dukunganCount,
+    String leftStatCount,
+    String leftStatLabel,
+    String rightStatCount,
+    String rightStatLabel,
   ) {
     final profileImageUrl = context.watch<AuthProvider>().profileImageUrl;
 
@@ -382,13 +408,13 @@ class _ProfileTabState extends State<ProfileTab> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
-                _buildStatItem(pelaporanCount, 'Pelaporan'),
+                _buildStatItem(leftStatCount, leftStatLabel),
                 Container(
                   width: 1,
                   color: Colors.white.withOpacity(0.1),
                   margin: const EdgeInsets.symmetric(vertical: 8),
                 ),
-                _buildStatItem(dukunganCount, 'Dukungan'),
+                _buildStatItem(rightStatCount, rightStatLabel),
               ],
             ),
           ),

@@ -200,6 +200,7 @@ class AdminDashboardProvider extends ChangeNotifier {
   Future<void> processTicket(
     String mongoIdStr,
     String action, {
+    required String adminId,
     String? urgency,
     String? rejectReason,
     String? pjNote,
@@ -215,6 +216,7 @@ class AdminDashboardProvider extends ChangeNotifier {
         'updatedAt': now,
         'tanggalVerifikasi': now,
         'status': action == 'Approve' ? 'Approved' : 'Rejected',
+        'idPenanggungJawab': ObjectId.fromHexString(adminId),
       };
 
       if (urgency != null) {

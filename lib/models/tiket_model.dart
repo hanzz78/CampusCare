@@ -29,6 +29,7 @@ class TiketModel {
 
   final String? alasanRejection; // 'alasanRejection'
   final String? catatanPJ; // 'catatanPJ'
+  final String? idPenanggungJawab; // 'idPenanggungJawab'
 
   final int jumlahVote; // 'jumlahVote'
   final List<CommentModel> comments; // 'comments'
@@ -58,6 +59,7 @@ class TiketModel {
     this.tanggalExport,
     this.alasanRejection,
     this.catatanPJ,
+    this.idPenanggungJawab,
     required this.jumlahVote,
     required this.comments,
     required this.createdAt,
@@ -87,6 +89,7 @@ class TiketModel {
       tanggalExport: _parseNullableDate(json['tanggalExport']),
       alasanRejection: json['alasanRejection'] as String?,
       catatanPJ: json['catatanPJ'] as String?,
+      idPenanggungJawab: _parseObjectId(json['idPenanggungJawab']),
       jumlahVote: json['jumlahVote'] as int? ?? 0,
       comments:
           (json['comments'] as List<dynamic>?)
@@ -120,6 +123,7 @@ class TiketModel {
       'tanggalExport': tanggalExport?.toIso8601String(),
       'alasanRejection': alasanRejection,
       'catatanPJ': catatanPJ,
+      if (idPenanggungJawab != null) 'idPenanggungJawab': idPenanggungJawab,
       'jumlahVote': jumlahVote,
       'comments': comments.map((e) => e.toJson()).toList(),
       'createdAt': createdAt.toIso8601String(),

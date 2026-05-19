@@ -391,6 +391,7 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
                     await context.read<AdminDashboardProvider>().processTicket(
                       widget.report.id!,
                       'Approve',
+                      adminId: context.read<AuthProvider>().userId ?? '',
                       urgency: urgency,
                       pjNote: note,
                     );
@@ -490,6 +491,7 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
                         await context.read<AdminDashboardProvider>().processTicket(
                           widget.report.id!,
                           'Reject',
+                          adminId: context.read<AuthProvider>().userId ?? '',
                           rejectReason: finalReason,
                         );
                         if (!mounted) return;
