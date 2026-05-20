@@ -20,7 +20,7 @@ class _LandingScreenState extends State<LandingScreen> {
   }
 
   Future<void> _startSplashTimer() async {
-    await Future.delayed(const Duration(seconds: 2));
+    await Future.delayed(const Duration(milliseconds: 1200));
     if (!mounted) return;
 
     final auth = context.read<AuthProvider>();
@@ -98,56 +98,35 @@ class _LandingScreenState extends State<LandingScreen> {
             ),
 
             SafeArea(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Top spacer
-                  const SizedBox(height: 44),
-
-                  // Logo and Title
-                  Center(
-                    child: Column(
-                      children: [
-                        // CampusCare Logo
-                        RichText(
-                          text: const TextSpan(
-                            children: [
-                              TextSpan(
-                                text: 'Campus',
-                                style: TextStyle(
-                                  fontSize: 46,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFF9E2A2B), // Auburn
-                                ),
-                              ),
-                              TextSpan(
-                                text: 'Care',
-                                style: TextStyle(
-                                  fontSize: 46,
-                                  fontWeight: FontWeight.bold,
-                                  color: Color(0xFFE09F3E), // Hunyadi yellow
-                                ),
-                              ),
-                            ],
+              child: Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // CampusCare Logo
+                    RichText(
+                      text: const TextSpan(
+                        children: [
+                          TextSpan(
+                            text: 'Campus',
+                            style: TextStyle(
+                              fontSize: 46,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF9E2A2B), // Auburn
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  // Bottom action area: Elegant loading indicator
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 80),
-                    child: SizedBox(
-                      width: 24,
-                      height: 24,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2.5,
-                        valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFE09F3E)),
+                          TextSpan(
+                            text: 'Care',
+                            style: TextStyle(
+                              fontSize: 46,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFFE09F3E), // Hunyadi yellow
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
