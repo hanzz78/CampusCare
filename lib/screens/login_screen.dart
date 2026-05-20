@@ -57,20 +57,7 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
             ),
 
-            // Tombol kembali ke landing page (overlay, tidak menggeser layout)
-            Positioned(
-              top: 0,
-              left: 8,
-              child: SafeArea(
-                child: IconButton(
-                  onPressed: () => Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(builder: (_) => const LandingScreen()),
-                  ),
-                  icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white70, size: 20),
-                ),
-              ),
-            ),
+
 
             SafeArea(
               child: Column(

@@ -72,23 +72,7 @@ class MyApp extends StatelessWidget {
       navigatorKey: navigatorKey,
       title: 'CampusCare Polban',
       theme: ThemeData(primarySwatch: Colors.blue),
-      home: Consumer<AuthProvider>(
-        builder: (context, auth, child) {
-          // Selama session sedang dicek, jangan tampilkan apa-apa agar terasa instant
-          if (!auth.isSessionChecked) {
-            return const Scaffold(backgroundColor: Colors.white);
-          }
-
-          // Auto Routing: Kalau udah login, lempar ke Dashboard. Kalau belum, ke Landing.
-          if (auth.isLoggedIn) {
-            if (auth.role == 'Penanggung Jawab') {
-              return const AdminShellScreen();
-            }
-            return DashboardScreen(role: auth.role);
-          }
-          return const LandingScreen();
-        },
-      ),
+      home: const LandingScreen(),
     );
   }
 }

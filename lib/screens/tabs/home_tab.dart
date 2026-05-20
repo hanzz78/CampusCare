@@ -433,14 +433,44 @@ class _HomeTabState extends State<HomeTab> {
                         onRefresh: () async {
                           await context.read<FeedProvider>().fetchReports();
                         },
-                        child: ListView.builder(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          padding: const EdgeInsets.only(top: 0, bottom: 80),
-                          itemCount: reports.length,
-                          itemBuilder: (context, index) {
-                            return ReportCard(report: reports[index]);
-                          },
-                        ),
+                        child: reports.isEmpty
+                            ? ListView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                children: [
+                                  SizedBox(
+                                    height: MediaQuery.of(context).size.height * 0.15,
+                                  ),
+                                  Center(
+                                    child: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.assignment_turned_in_outlined,
+                                          size: 64,
+                                          color: const Color(0xFF6F8A90).withOpacity(0.5),
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text(
+                                          'Tidak ada laporan terbaru',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            fontWeight: FontWeight.w600,
+                                            color: Color(0xFF6F8A90),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              )
+                            : ListView.builder(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: const EdgeInsets.only(top: 0, bottom: 80),
+                                itemCount: reports.length,
+                                itemBuilder: (context, index) {
+                                  return ReportCard(report: reports[index]);
+                                },
+                              ),
                       ),
                     ),
                   ],
