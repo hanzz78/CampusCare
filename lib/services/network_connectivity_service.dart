@@ -23,9 +23,17 @@ class NetworkConnectivityService {
 
   void startListening() {
     _connectivity.onConnectivityChanged.listen((List<ConnectivityResult> results) {
-      if (results.isNotEmpty && results.first != ConnectivityResult.none) {
+      if (results.isEmpty || results.first == ConnectivityResult.none) {
+        if (kDebugMode) {
+          print('🚫 Network disconnected.');
+        }
+        MongoService().connectionState.value = MongoConnectionState.offline;
+      } else {
         if (kDebugMode) {
           print('🌐 Network connected. Starting background sync...');
+        }
+        if (MongoService().connectionState.value == MongoConnectionState.offline) {
+          MongoService().connect();
         }
         _syncOfflineReports();
       }
@@ -33,7 +41,9 @@ class NetworkConnectivityService {
     
     // Check initial connectivity and sync if online
     _connectivity.checkConnectivity().then((List<ConnectivityResult> results) {
-      if (results.isNotEmpty && results.first != ConnectivityResult.none) {
+      if (results.isEmpty || results.first == ConnectivityResult.none) {
+        MongoService().connectionState.value = MongoConnectionState.offline;
+      } else {
         _syncOfflineReports();
       }
     });

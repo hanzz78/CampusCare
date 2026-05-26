@@ -189,7 +189,15 @@ class AdminDashboardProvider extends ChangeNotifier {
       debugPrint("✅ Fetched ${_reports.length} reports");
     } catch (e) {
       debugPrint("❌ Error fetchDashboardStats: $e");
-      _errorMessage = e.toString();
+      final errStr = e.toString().toLowerCase();
+      if (errStr.contains('no_internet') || errStr.contains('database not connected') || errStr.contains('socketexception') || errStr.contains('connection')) {
+        _errorMessage = 'Koneksi terputus. Gagal memuat data dari database.';
+        Future.delayed(const Duration(seconds: 3), () {
+          if (!_isLoading) fetchDashboardStats();
+        });
+      } else {
+        _errorMessage = 'Terjadi kesalahan saat memuat data.';
+      }
     }
 
     _isLoading = false;
@@ -259,7 +267,12 @@ class AdminDashboardProvider extends ChangeNotifier {
       await fetchDashboardStats();
     } catch (e) {
       debugPrint("❌ Exception in processTicket: $e");
-      _errorMessage = e.toString();
+      final errStr = e.toString().toLowerCase();
+      if (errStr.contains('no_internet') || errStr.contains('database not connected') || errStr.contains('socketexception') || errStr.contains('connection')) {
+        _errorMessage = 'Koneksi terputus. Gagal memproses tiket.';
+      } else {
+        _errorMessage = 'Terjadi kesalahan saat memproses tiket.';
+      }
       _isLoading = false;
       notifyListeners();
       rethrow;

@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../providers/admin_dashboard_provider.dart';
 import '../../models/tiket_model.dart';
+import '../../services/mongo_service.dart';
 import 'admin_report_review_screen.dart';
 
 class AdminHomeTab extends StatefulWidget {
@@ -97,41 +98,94 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
           children: [
             _buildHeader(hasUnread, notifs),
             Expanded(
-              child: provider.isLoading
-                  ? const Center(child: CircularProgressIndicator(color: Color(0xFF3B696D)))
-                  : provider.errorMessage != null
-                      ? _buildError(provider)
-                      : RefreshIndicator(
-                          color: _tealMid,
-                          onRefresh: () => provider.fetchDashboardStats(),
-                          child: SingleChildScrollView(
-                            physics: const AlwaysScrollableScrollPhysics(),
-                            padding: const EdgeInsets.fromLTRB(16, 20, 16, 28),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                _sectionLabel('Statistik Laporan'),
-                                const SizedBox(height: 10),
-                                _buildTopMetrics(provider),
-                                const SizedBox(height: 20),
-                                _sectionLabel('Tingkat Urgensi'),
-                                const SizedBox(height: 10),
-                                _buildUrgencyStats(provider),
-                                const SizedBox(height: 20),
-                                _sectionLabel('Kategori Masuk'),
-                                const SizedBox(height: 10),
-                                _buildCategoryStats(provider),
-                                const SizedBox(height: 20),
-                                _sectionLabel('Laporan Per Hari (7 Hari)'),
-                                const SizedBox(height: 10),
-                                _buildReportsChart(provider),
-                                const SizedBox(height: 20),
-                                _buildDailySummaryTable(provider),
-                                const SizedBox(height: 24),
-                              ],
+              child: ValueListenableBuilder<MongoConnectionState>(
+                valueListenable: MongoService().connectionState,
+                builder: (context, state, child) {
+                  if (state == MongoConnectionState.connecting || state == MongoConnectionState.error) {
+                    return const Center(
+                      child: CircularProgressIndicator(color: Color(0xFF3B696D)),
+                    );
+                  } else if (state == MongoConnectionState.offline) {
+                    return Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.wifi_off_rounded,
+                            size: 64,
+                            color: Colors.grey,
+                          ),
+                          const SizedBox(height: 16),
+                          const Text(
+                            'Anda sedang offline',
+                            style: TextStyle(
+                              color: Color(0xFF335C67),
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        ),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'Periksa koneksi internet Anda.',
+                            style: TextStyle(
+                              color: Colors.grey,
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              MongoService().connect();
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF3B696D),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            ),
+                            icon: const Icon(Icons.refresh),
+                            label: const Text('Coba Lagi'),
+                          ),
+                        ],
+                      ),
+                    );
+                  }
+
+                  // Jika sudah terhubung, jalankan logika bawaan dashboard
+                  return (provider.isLoading || provider.errorMessage != null)
+                      ? const Center(child: CircularProgressIndicator(color: Color(0xFF3B696D)))
+                      : RefreshIndicator(
+                              color: _tealMid,
+                              onRefresh: () => provider.fetchDashboardStats(),
+                              child: SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: const EdgeInsets.fromLTRB(16, 20, 16, 28),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    _sectionLabel('Statistik Laporan'),
+                                    const SizedBox(height: 10),
+                                    _buildTopMetrics(provider),
+                                    const SizedBox(height: 20),
+                                    _sectionLabel('Tingkat Urgensi'),
+                                    const SizedBox(height: 10),
+                                    _buildUrgencyStats(provider),
+                                    const SizedBox(height: 20),
+                                    _sectionLabel('Kategori Masuk'),
+                                    const SizedBox(height: 10),
+                                    _buildCategoryStats(provider),
+                                    const SizedBox(height: 20),
+                                    _sectionLabel('Laporan Per Hari (7 Hari)'),
+                                    const SizedBox(height: 10),
+                                    _buildReportsChart(provider),
+                                    const SizedBox(height: 20),
+                                    _buildDailySummaryTable(provider),
+                                    const SizedBox(height: 24),
+                                  ],
+                                ),
+                              ),
+                            );
+                },
+              ),
             ),
           ],
         ),
@@ -322,18 +376,6 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
     child: Text(title, style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF335C67))),
   );
 
-  Widget _buildError(AdminDashboardProvider provider) => Center(
-    child: Padding(
-      padding: const EdgeInsets.all(24),
-      child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-        const Icon(Icons.cloud_off, size: 64, color: Colors.red),
-        const SizedBox(height: 16),
-        Text(provider.errorMessage!, textAlign: TextAlign.center, style: const TextStyle(fontSize: 16)),
-        const SizedBox(height: 24),
-        ElevatedButton.icon(onPressed: () => provider.fetchDashboardStats(), icon: const Icon(Icons.refresh), label: const Text('Coba Lagi')),
-      ]),
-    ),
-  );
 
   Widget _buildTopMetrics(AdminDashboardProvider provider) {
     final accepted = provider.reports.where((t) => t.status == 'Approved' || t.status == 'Documented').length;

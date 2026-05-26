@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
+enum MongoConnectionState { connecting, connected, offline, error }
+
 class MongoService {
   static final MongoService _instance = MongoService._internal();
   factory MongoService() => _instance;
@@ -12,7 +14,8 @@ class MongoService {
   Db? _db;
 
   /// Observable connection status for UI binding
-  final ValueNotifier<bool> isConnected = ValueNotifier<bool>(false);
+  final ValueNotifier<MongoConnectionState> connectionState = 
+      ValueNotifier<MongoConnectionState>(MongoConnectionState.connecting);
 
   /// Completer that resolves when the first connection attempt finishes
   /// (either success or failure). UI can await this to know when to proceed.
@@ -46,6 +49,7 @@ class MongoService {
 
     int retryCount = 0;
     const int maxRetries = 2;
+    connectionState.value = MongoConnectionState.connecting;
 
     while (retryCount <= maxRetries) {
       try {
@@ -70,13 +74,13 @@ class MongoService {
         await _db!.open(secure: true).timeout(const Duration(seconds: 15));
         
         if (kDebugMode) print("✅ Connected to MongoDB");
-        isConnected.value = true;
+        connectionState.value = MongoConnectionState.connected;
         _completeInitial();
         return;
       } catch (e) {
         if (e.toString().contains('NO_INTERNET')) {
           if (kDebugMode) print("⚠️ Operating in offline mode.");
-          isConnected.value = false;
+          connectionState.value = MongoConnectionState.offline;
           _completeInitial();
           rethrow; // Langsung gagal tanpa retry jika tidak ada internet
         }
@@ -84,7 +88,7 @@ class MongoService {
         if (kDebugMode) print("⚠️ Connection error: $e");
         
         if (retryCount > maxRetries) {
-          isConnected.value = false;
+          connectionState.value = MongoConnectionState.error;
           _completeInitial();
           rethrow;
         }
@@ -135,6 +139,6 @@ class MongoService {
 
   Future<void> close() async {
     if (_db != null) await _db!.close();
-    isConnected.value = false;
+    connectionState.value = MongoConnectionState.offline;
   }
 }
