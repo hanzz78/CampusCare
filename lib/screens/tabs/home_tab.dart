@@ -4,7 +4,7 @@ import '../../providers/feed_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/tiket_model.dart';
 import '../../models/notification_model.dart';
-import '../report_detail_screen.dart';
+import '../notifications_screen.dart';
 import '../../widgets/report_card.dart';
 
 class HomeTab extends StatefulWidget {
@@ -18,7 +18,6 @@ class _HomeTabState extends State<HomeTab> {
   String _activeCategory = 'Semua';
   String _selectedSort = 'Terbaru';
   String _selectedMinDukungan = 'Semua';
-  bool _showNotifications = false;
 
   @override
   void initState() {
@@ -262,7 +261,6 @@ class _HomeTabState extends State<HomeTab> {
   @override
   Widget build(BuildContext context) {
     final feedProvider = context.watch<FeedProvider>();
-    final authProvider = context.watch<AuthProvider>();
     final reports = _applyFilters(feedProvider.reports);
     final List<NotificationModel> notifications = feedProvider.dbNotifications;
     final hasUnreadNotifications = notifications.any(
@@ -273,7 +271,22 @@ class _HomeTabState extends State<HomeTab> {
       children: [
         Column(
           children: [
-            _buildHeader(hasUnreadNotifications),
+            _buildHeader(
+              hasUnreadNotifications,
+              () async {
+                final userId = context.read<AuthProvider>().userId;
+                if (userId != null) {
+                  await context.read<FeedProvider>().fetchNotifications(userId);
+                }
+                if (!context.mounted) return;
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const NotificationsScreen(),
+                  ),
+                );
+              },
+            ),
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -382,191 +395,11 @@ class _HomeTabState extends State<HomeTab> {
             ),
           ],
         ),
-        if (_showNotifications)
-          Positioned.fill(
-            child: GestureDetector(
-              behavior: HitTestBehavior.opaque,
-              onTap: () {
-                setState(() {
-                  _showNotifications = false;
-                });
-              },
-              child: const SizedBox.expand(),
-            ),
-          ),
-        if (_showNotifications)
-          Positioned(
-            top: MediaQuery.paddingOf(context).top + 66,
-            left: 16,
-            right: 16,
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFFD8DDE0)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.08),
-                      blurRadius: 14,
-                      offset: const Offset(0, 6),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
-                      child: Row(
-                        children: [
-                          const Expanded(
-                            child: Text(
-                              'Notifikasi',
-                              style: TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: Color(0xFF6F8A90),
-                              ),
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: notifications.isEmpty
-                                ? null
-                                : () async {
-                                    final userId = authProvider.userId;
-                                    if (userId != null) {
-                                      await feedProvider.markAllNotificationsAsRead(userId);
-                                    }
-                                  },
-                            child: Text(
-                              'Mark all read',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: notifications.isEmpty
-                                    ? const Color(0xFFAAB5B9)
-                                    : const Color(0xFF6F8A90),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1),
-                    if (notifications.isEmpty)
-                      const Padding(
-                        padding: EdgeInsets.all(14),
-                        child: Text(
-                          'Belum ada notifikasi.',
-                          style: TextStyle(
-                            color: Color(0xFF6F8A90),
-                            fontSize: 12,
-                          ),
-                        ),
-                      )
-                    else
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 220),
-                        child: ListView.separated(
-                          primary: false,
-                          padding: EdgeInsets.zero,
-                          shrinkWrap: true,
-                          itemCount: notifications.length,
-                          separatorBuilder: (_, __) => const Divider(height: 1),
-                          itemBuilder: (_, index) {
-                            final item = notifications[index];
-                            final isRead = item.isRead;
-                            
-                            // Tentukan judul berdasarkan deskripsi notifikasi
-                            String displayTitle = 'Notifikasi';
-                            if (item.description.contains('dukungan')) {
-                              displayTitle = 'Dukungan Laporan';
-                            } else if (item.description.contains('komentar')) {
-                              displayTitle = 'Komentar Baru';
-                            } else if (item.description.contains('disetujui') || item.description.contains('ditolak')) {
-                              displayTitle = 'Status Laporan';
-                            }
-
-                            return InkWell(
-                              onTap: () async {
-                                if (item.id != null) {
-                                  await feedProvider.markNotificationAsRead(item.id!);
-                                }
-                                setState(() {
-                                  _showNotifications = false;
-                                });
-                                final report = feedProvider.getReportById(item.ticketId);
-                                if (report != null) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => ReportDetailScreen(
-                                        report: report,
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Laporan tidak ditemukan')),
-                                  );
-                                }
-                              },
-                              child: Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  14,
-                                  10,
-                                  10,
-                                  10,
-                                ),
-                                child: Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            displayTitle,
-                                            style: const TextStyle(
-                                              fontSize: 13,
-                                              fontWeight: FontWeight.w600,
-                                              color: Color(0xFF0F2B33),
-                                            ),
-                                          ),
-                                          const SizedBox(height: 3),
-                                          Text(
-                                            item.description,
-                                            maxLines: 2,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontSize: 11,
-                                              color: Color(0xFF6F8A90),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    if (!isRead) ...[
-                                      const SizedBox(width: 10),
-                                      const Icon(Icons.circle, size: 8, color: Color(0xFF4CAF50)),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-          ),
       ],
     );
   }
 
-  Widget _buildHeader(bool hasNotifications) {
+  Widget _buildHeader(bool hasNotifications, VoidCallback onBellPressed) {
     return Container(
       color: const Color(0xFF2A5256),
       child: SafeArea(
@@ -626,11 +459,7 @@ class _HomeTabState extends State<HomeTab> {
                       clipBehavior: Clip.none,
                       children: [
                         IconButton(
-                          onPressed: () {
-                            setState(() {
-                              _showNotifications = !_showNotifications;
-                            });
-                          },
+                          onPressed: onBellPressed,
                           icon: const Icon(
                             Icons.notifications_none_rounded,
                             color: Colors.white,
