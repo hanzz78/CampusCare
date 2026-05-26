@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -10,7 +11,22 @@ class MongoService {
 
   Db? _db;
 
-  Future<void> connect() async {
+  /// Observable connection status for UI binding
+  final ValueNotifier<bool> isConnected = ValueNotifier<bool>(false);
+
+  /// Completer that resolves when the first connection attempt finishes
+  /// (either success or failure). UI can await this to know when to proceed.
+  Completer<void>? _initialConnectionCompleter;
+
+  /// Returns a Future that completes when the initial connection attempt is done.
+  Future<void> get initialConnectionDone {
+    return _initialConnectionCompleter?.future ?? Future.value();
+  }
+
+  Future<void> connect({bool isInitial = false}) async {
+    if (isInitial && _initialConnectionCompleter == null) {
+      _initialConnectionCompleter = Completer<void>();
+    }
     if (_db != null && _db!.state == State.OPEN) {
       if (_db!.isConnected) {
         try {
@@ -54,16 +70,24 @@ class MongoService {
         await _db!.open(secure: true).timeout(const Duration(seconds: 15));
         
         if (kDebugMode) print("✅ Connected to MongoDB");
+        isConnected.value = true;
+        _completeInitial();
         return;
       } catch (e) {
         if (e.toString().contains('NO_INTERNET')) {
           if (kDebugMode) print("⚠️ Operating in offline mode.");
+          isConnected.value = false;
+          _completeInitial();
           rethrow; // Langsung gagal tanpa retry jika tidak ada internet
         }
         retryCount++;
         if (kDebugMode) print("⚠️ Connection error: $e");
         
-        if (retryCount > maxRetries) rethrow;
+        if (retryCount > maxRetries) {
+          isConnected.value = false;
+          _completeInitial();
+          rethrow;
+        }
         await Future.delayed(Duration(seconds: retryCount * 2));
       }
     }
@@ -103,7 +127,14 @@ class MongoService {
     await col.updateOne(where.eq('_id', objectId), modifier);
   }
 
+  void _completeInitial() {
+    if (_initialConnectionCompleter != null && !_initialConnectionCompleter!.isCompleted) {
+      _initialConnectionCompleter!.complete();
+    }
+  }
+
   Future<void> close() async {
     if (_db != null) await _db!.close();
+    isConnected.value = false;
   }
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/admin_dashboard_provider.dart';
+import '../../services/mongo_service.dart';
 import '../login_screen.dart';
 import 'admin_home_tab.dart';
 import 'admin_all_reports_tab.dart';
@@ -37,14 +38,41 @@ class _AdminShellScreenState extends State<AdminShellScreen> {
               backgroundColor: const Color(0xFF3B696D),
               iconTheme: const IconThemeData(color: Colors.white),
             ),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: const [
-          AdminHomeTab(),
-          AdminAllReportsTab(), // for Pending
-          AdminAllReportsTab(), // for Reviewed
-          ProfileTab(), // Reuse user's profile tab, or create AdminProfileTab if needed
-        ],
+      body: ValueListenableBuilder<bool>(
+        valueListenable: MongoService().isConnected,
+        builder: (context, isConnected, child) {
+          if (!isConnected) {
+            return const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(
+                    color: Color(0xFFE09F3E),
+                    strokeWidth: 3,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Menyambungkan ke database...',
+                    style: TextStyle(
+                      color: Color(0xFF335C67),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }
+          return IndexedStack(
+            index: _selectedIndex,
+            children: const [
+              AdminHomeTab(),
+              AdminAllReportsTab(), // for Pending
+              AdminAllReportsTab(), // for Reviewed
+              ProfileTab(), // Reuse user's profile tab, or create AdminProfileTab if needed
+            ],
+          );
+        },
       ),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
