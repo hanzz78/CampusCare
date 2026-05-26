@@ -115,7 +115,7 @@ class MongoService {
 
   Future<void> createUser(Map<String, dynamic> userData) async {
     await connect();
-    await getCollection('users').insert(userData);
+    await getCollection('users').insertOne(userData);
   }
 
   Future<void> updateUser(String userId, Map<String, dynamic> data) async {

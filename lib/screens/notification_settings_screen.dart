@@ -10,13 +10,9 @@ class NotificationSettingsScreen extends StatefulWidget {
 }
 
 class _NotificationSettingsScreenState extends State<NotificationSettingsScreen> {
-  bool _notifikasiBaru = true;
   bool _statusLaporan = true;
-  bool _updateLaporan = true;
   bool _komentar = true;
   bool _upvote = false;
-  bool _email = true;
-  bool _push = true;
 
   @override
   void initState() {
@@ -27,25 +23,17 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
   Future<void> _loadNotificationSettings() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _notifikasiBaru = prefs.getBool('notif_baru') ?? true;
       _statusLaporan = prefs.getBool('notif_status') ?? true;
-      _updateLaporan = prefs.getBool('notif_update') ?? true;
       _komentar = prefs.getBool('notif_komentar') ?? true;
       _upvote = prefs.getBool('notif_upvote') ?? false;
-      _email = prefs.getBool('notif_email') ?? true;
-      _push = prefs.getBool('notif_push') ?? true;
     });
   }
 
   Future<void> _saveNotificationSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('notif_baru', _notifikasiBaru);
     await prefs.setBool('notif_status', _statusLaporan);
-    await prefs.setBool('notif_update', _updateLaporan);
     await prefs.setBool('notif_komentar', _komentar);
     await prefs.setBool('notif_upvote', _upvote);
-    await prefs.setBool('notif_email', _email);
-    await prefs.setBool('notif_push', _push);
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -84,32 +72,12 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
             const SizedBox(height: 12),
             _buildNotificationCard([
               _buildToggleItem(
-                icon: Icons.note_add,
-                title: 'Laporan Baru',
-                subtitle: 'Notifikasi laporan baru dari pengguna lain',
-                value: _notifikasiBaru,
-                onChanged: (value) {
-                  setState(() => _notifikasiBaru = value);
-                },
-              ),
-              _buildDivider(),
-              _buildToggleItem(
                 icon: Icons.info_outline,
                 title: 'Update Status Laporan',
                 subtitle: 'Perubahan status laporan Anda diperbarui',
                 value: _statusLaporan,
                 onChanged: (value) {
                   setState(() => _statusLaporan = value);
-                },
-              ),
-              _buildDivider(),
-              _buildToggleItem(
-                icon: Icons.edit_note,
-                title: 'Update Laporan',
-                subtitle: 'Pembaruan detail dari laporan yang sedang berlangsung',
-                value: _updateLaporan,
-                onChanged: (value) {
-                  setState(() => _updateLaporan = value);
                 },
               ),
               _buildDivider(),
@@ -130,32 +98,6 @@ class _NotificationSettingsScreenState extends State<NotificationSettingsScreen>
                 value: _upvote,
                 onChanged: (value) {
                   setState(() => _upvote = value);
-                },
-              ),
-            ]),
-            const SizedBox(height: 28),
-
-            // Section: Saluran Notifikasi
-            _buildSectionHeader('Saluran Notifikasi'),
-            const SizedBox(height: 12),
-            _buildNotificationCard([
-              _buildToggleItem(
-                icon: Icons.notifications_active,
-                title: 'Notifikasi Push',
-                subtitle: 'Terima notifikasi di perangkat Anda',
-                value: _push,
-                onChanged: (value) {
-                  setState(() => _push = value);
-                },
-              ),
-              _buildDivider(),
-              _buildToggleItem(
-                icon: Icons.mail_outline,
-                title: 'Email',
-                subtitle: 'Terima notifikasi melalui email',
-                value: _email,
-                onChanged: (value) {
-                  setState(() => _email = value);
                 },
               ),
             ]),
