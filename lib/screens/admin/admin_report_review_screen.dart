@@ -299,10 +299,17 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
         decoration: BoxDecoration(
           color: selected ? color.withOpacity(0.12) : bg,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: selected ? color : border, width: selected ? 2 : 1),
+          border: Border.all(color: selected ? color : border, width: 2),
         ),
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          if (selected) Icon(Icons.check_circle, color: color, size: 18),
+          Visibility(
+            visible: selected,
+            maintainSize: true,
+            maintainAnimation: true,
+            maintainState: true,
+            child: Icon(Icons.check_circle, color: color, size: 18),
+          ),
+          const SizedBox(height: 4),
           Text(shortLabel, textAlign: TextAlign.center, style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700, color: selected ? color : color.withOpacity(0.7))),
         ]),
       ),
@@ -458,7 +465,7 @@ class _AdminReportReviewScreenState extends State<AdminReportReviewScreen> {
                       decoration: BoxDecoration(
                         color: sel ? const Color(0xFF9E2A2B).withOpacity(0.1) : Colors.grey.shade100,
                         borderRadius: BorderRadius.circular(999),
-                        border: Border.all(color: sel ? const Color(0xFF9E2A2B) : Colors.grey.shade200, width: sel ? 1.5 : 1),
+                        border: Border.all(color: sel ? const Color(0xFF9E2A2B) : Colors.grey.shade200, width: 1.5),
                       ),
                       child: Text(r, style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: sel ? const Color(0xFF9E2A2B) : Colors.grey.shade700)),
                     ),

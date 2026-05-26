@@ -178,9 +178,14 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                 backgroundColor: Colors.blue[800],
                 foregroundColor: Colors.white,
               ),
-              child: isLoading
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                  : const Text('Simpan & Lanjutkan', style: TextStyle(fontSize: 16)),
+              child: SizedBox(
+                height: 24,
+                child: Center(
+                  child: isLoading
+                      ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                      : const Text('Simpan & Lanjutkan', style: TextStyle(fontSize: 16)),
+                ),
+              ),
             ),
           ],
         ),
