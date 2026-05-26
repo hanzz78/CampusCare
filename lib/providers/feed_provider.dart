@@ -3,6 +3,7 @@ import 'package:mongo_dart/mongo_dart.dart' show ObjectId, modify, where;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/tiket_model.dart';
+import '../models/notification_model.dart';
 import '../services/mongo_service.dart';
 
 class FeedProvider extends ChangeNotifier {
@@ -15,6 +16,9 @@ class FeedProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   int get userVoteCount => _userVoteCount;
   int get userReportCount => _userReportCount;
+
+  List<NotificationModel> _dbNotifications = [];
+  List<NotificationModel> get dbNotifications => _dbNotifications;
 
   // Set berisi idTiket yang sudah di-vote oleh user saat ini
   final Set<String> _votedTicketIds = {};
@@ -105,7 +109,7 @@ class FeedProvider extends ChangeNotifier {
 
       // UPVOTE LOGIC
       // Tambahkan ke koleksi votes
-      await votesCol.insert({
+      await votesCol.insertOne({
         'idTiket': idTiket,
         'idUser': ObjectId.fromHexString(userId),
         'emailUser': emailUser,
@@ -130,23 +134,32 @@ class FeedProvider extends ChangeNotifier {
       final ticket = await ticketsCol.findOne(where.eq('idTiket', idTiket));
       if (ticket != null) {
         final ticketOwnerId = ticket['idUser'];
+        final ticketOwnerHex = _getHex(ticketOwnerId);
+        final userHex = _getHex(userId);
+        debugPrint("🔍 Upvote Notification Check - Owner Hex: $ticketOwnerHex, User Hex: $userHex");
         
-        // Hanya kirim notifikasi jika yang upvote BUKAN pemilik tiket
-        if (ticketOwnerId != null && ticketOwnerId.toString() != ObjectId.fromHexString(userId).toString()) {
-          final notificationsCol = MongoService().getCollection('notifications');
+        // Kirim notifikasi ke pemilik tiket
+        if (ticketOwnerHex.isNotEmpty) {
           try {
-            await notificationsCol.insert({
-              'idTiket': idTiket,
-              'idReceiver': ticketOwnerId,
-              'type': 'upvote',
-              'message': 'Seseorang telah memberikan dukungan pada laporan Anda "${ticket['judulSingkat']}"',
-              'isRead': false,
-              'createdAt': DateTime.now(),
+            await MongoService().connect();
+            final notificationsCol = MongoService().getCollection('notifications');
+            final insertResult = await notificationsCol.insertOne({
+              'user_id': _toObjectId(ticketOwnerId) ?? ticketOwnerId,
+              'ticket_id': idTiket,
+              'ticket_title': ticket['judulSingkat'] ?? '',
+              'description': 'Laporan Anda mendapatkan dukungan pada ticket: ${ticket['judulSingkat'] ?? ''}.',
+              'is_read': false,
+              'created_at': DateTime.now(),
             });
-            debugPrint("✅ Notifikasi upvote berhasil disimpan.");
+            debugPrint("✅ Upvote notif - hasWriteErrors: ${insertResult.hasWriteErrors}, nInserted: ${insertResult.nInserted}, id: ${insertResult.id}");
+            if (insertResult.hasWriteErrors) {
+              debugPrint("❌ WriteError code: ${insertResult.writeError?.code}, msg: ${insertResult.writeError?.errmsg}");
+            }
           } catch (e) {
             debugPrint("❌ Error menyimpan notifikasi upvote: $e");
           }
+        } else {
+          debugPrint("ℹ️ Skipped upvote notification (empty owner).");
         }
       }
 
@@ -181,7 +194,7 @@ class FeedProvider extends ChangeNotifier {
         'content': content,
         'tanggalKomentar': DateTime.now(),
         'isDeleted': false,
-        if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
+        if (profileImageUrl != null) 'profileImageUrl': profileImageUrl!,
       };
 
       // Push komentar ke array comments di dalam dokumen tiket
@@ -203,25 +216,32 @@ class FeedProvider extends ChangeNotifier {
       final ticket = await ticketsCol.findOne(where.eq('idTiket', idTiket));
       if (ticket != null) {
         final ticketOwnerId = ticket['idUser'];
+        final ticketOwnerHex = _getHex(ticketOwnerId);
+        final userHex = _getHex(userId);
+        debugPrint("🔍 Comment Notification Check - Owner Hex: $ticketOwnerHex, User Hex: $userHex");
         
-        // Hanya kirim notifikasi jika yang komen BUKAN pemilik tiket
-        if (ticketOwnerId != null && ticketOwnerId.toString() != ObjectId.fromHexString(userId).toString()) {
-          final notificationsCol = MongoService().getCollection('notifications');
-          final commenterName = emailUser.split('@')[0]; // Ambil nama dari email
-          
+        // Kirim notifikasi ke pemilik tiket
+        if (ticketOwnerHex.isNotEmpty) {
           try {
-            await notificationsCol.insert({
-              'idTiket': idTiket,
-              'idReceiver': ticketOwnerId,
-              'type': 'comment',
-              'message': '$commenterName memberikan komentar pada laporan Anda "${ticket['judulSingkat']}"',
-              'isRead': false,
-              'createdAt': DateTime.now(),
+            await MongoService().connect();
+            final notificationsCol = MongoService().getCollection('notifications');
+            final insertResult = await notificationsCol.insertOne({
+              'user_id': _toObjectId(ticketOwnerId) ?? ticketOwnerId,
+              'ticket_id': idTiket,
+              'ticket_title': ticket['judulSingkat'] ?? '',
+              'description': 'Laporan Anda mendapatkan komentar baru pada ticket: ${ticket['judulSingkat'] ?? ''}.',
+              'is_read': false,
+              'created_at': DateTime.now(),
             });
-            debugPrint("✅ Notifikasi komentar berhasil disimpan.");
+            debugPrint("✅ Comment notif - hasWriteErrors: ${insertResult.hasWriteErrors}, nInserted: ${insertResult.nInserted}, id: ${insertResult.id}");
+            if (insertResult.hasWriteErrors) {
+              debugPrint("❌ WriteError code: ${insertResult.writeError?.code}, msg: ${insertResult.writeError?.errmsg}");
+            }
           } catch (e) {
             debugPrint("❌ Error menyimpan notifikasi komentar: $e");
           }
+        } else {
+          debugPrint("ℹ️ Skipped comment notification (empty owner).");
         }
       }
 
@@ -313,6 +333,113 @@ class FeedProvider extends ChangeNotifier {
       return '${difference.inHours} jam yang lalu';
     } else {
       return '${difference.inDays} hari yang lalu';
+    }
+  }
+
+  Future<void> fetchNotifications(String userId) async {
+    if (userId.isEmpty) return;
+    try {
+      await MongoService().connect();
+      final notificationsCol = MongoService().getCollection('notifications');
+      
+      final data = await notificationsCol.find(
+        where.eq('user_id', ObjectId.fromHexString(userId))
+            .sortBy('created_at', descending: true)
+      ).toList();
+
+      _dbNotifications = data.map((json) => NotificationModel.fromJson(json)).toList();
+      notifyListeners();
+    } catch (e) {
+      debugPrint("❌ Error fetchNotifications: $e");
+    }
+  }
+
+  Future<void> markNotificationAsRead(String notificationId) async {
+    try {
+      await MongoService().connect();
+      final notificationsCol = MongoService().getCollection('notifications');
+      await notificationsCol.updateOne(
+        where.id(ObjectId.fromHexString(notificationId)),
+        modify.set('is_read', true),
+      );
+      
+      // Update local state
+      final idx = _dbNotifications.indexWhere((n) => n.id == notificationId);
+      if (idx != -1) {
+        final old = _dbNotifications[idx];
+        _dbNotifications[idx] = NotificationModel(
+          id: old.id,
+          userId: old.userId,
+          ticketId: old.ticketId,
+          ticketTitle: old.ticketTitle,
+          description: old.description,
+          isRead: true,
+          createdAt: old.createdAt,
+        );
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("❌ Error marking notification as read: $e");
+    }
+  }
+
+  Future<void> markAllNotificationsAsRead(String userId) async {
+    try {
+      await MongoService().connect();
+      final notificationsCol = MongoService().getCollection('notifications');
+      await notificationsCol.updateMany(
+        where.eq('user_id', ObjectId.fromHexString(userId)),
+        modify.set('is_read', true),
+      );
+      
+      // Update local state
+      _dbNotifications = _dbNotifications.map((n) {
+        return NotificationModel(
+          id: n.id,
+          userId: n.userId,
+          ticketId: n.ticketId,
+          ticketTitle: n.ticketTitle,
+          description: n.description,
+          isRead: true,
+          createdAt: n.createdAt,
+        );
+      }).toList();
+      notifyListeners();
+    } catch (e) {
+      debugPrint("❌ Error marking all notifications as read: $e");
+    }
+  }
+
+  TiketModel? getReportById(String ticketId) {
+    try {
+      return _reports.firstWhere((r) => r.idTiket == ticketId);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  String _getHex(dynamic value) {
+    if (value == null) return '';
+    if (value is ObjectId) return value.oid;
+    final str = value.toString();
+    if (str.startsWith('ObjectId("') && str.endsWith('")')) {
+      return str.substring(10, str.length - 2);
+    }
+    return str;
+  }
+
+  ObjectId? _toObjectId(dynamic value) {
+    if (value == null) return null;
+    if (value is ObjectId) return value;
+    final str = value.toString();
+    if (str.startsWith('ObjectId("') && str.endsWith('")')) {
+      final hex = str.substring(10, str.length - 2);
+      return ObjectId.fromHexString(hex);
+    }
+    try {
+      return ObjectId.fromHexString(str);
+    } catch (_) {
+      return null;
     }
   }
 }

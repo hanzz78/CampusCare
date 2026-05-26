@@ -192,7 +192,7 @@ class ReportFormProvider extends ChangeNotifier {
 
     await MongoService().connect();
     final collection = MongoService().getCollection('tickets');
-    await collection.insert(tiketMap);
+    await collection.insertOne(tiketMap);
     debugPrint("🚀 Tiket berhasil dikirim ke MongoDB: $idTiket");
   }
 }

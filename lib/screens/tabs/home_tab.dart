@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../providers/feed_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../models/tiket_model.dart';
+import '../../models/notification_model.dart';
 import '../report_detail_screen.dart';
-import '../report_history_screen.dart';
 import '../../widgets/report_card.dart';
 
 class HomeTab extends StatefulWidget {
@@ -20,27 +19,16 @@ class _HomeTabState extends State<HomeTab> {
   String _selectedSort = 'Terbaru';
   String _selectedMinDukungan = 'Semua';
   bool _showNotifications = false;
-  final Set<String> _readNotificationKeys = <String>{};
-
-  static const String _prefKey = 'read_notification_keys';
 
   @override
   void initState() {
     super.initState();
-    _loadReadKeys();
-  }
-
-  Future<void> _loadReadKeys() async {
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getStringList(_prefKey) ?? [];
-    setState(() {
-      _readNotificationKeys.addAll(saved);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = context.read<AuthProvider>();
+      if (authProvider.userId != null) {
+        context.read<FeedProvider>().fetchNotifications(authProvider.userId!);
+      }
     });
-  }
-
-  Future<void> _saveReadKeys() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_prefKey, _readNotificationKeys.toList());
   }
 
   List<TiketModel> _applyFilters(List<TiketModel> reports) {
@@ -75,92 +63,7 @@ class _HomeTabState extends State<HomeTab> {
     return result;
   }
 
-  List<_HomeNotification> _buildNotifications(
-    List<TiketModel> reports, {
-    String? currentUserId,
-    String? currentEmail,
-  }) {
-    final items = <_HomeNotification>[];
-
-    for (final report in reports) {
-      final isMine =
-          (currentUserId != null &&
-              currentUserId.isNotEmpty &&
-              report.idUser == currentUserId) ||
-          (currentEmail != null &&
-              currentEmail.isNotEmpty &&
-              report.emailUser == currentEmail);
-      if (!isMine) {
-        continue;
-      }
-
-      if (report.jumlahVote > 0) {
-        items.add(
-          _HomeNotification(
-            key:
-                'dukungan-${report.idTiket}-${report.updatedAt.millisecondsSinceEpoch}',
-            title: 'Laporanmu mendapat dukungan',
-            subtitle: report.judulSingkat,
-            report: report,
-            createdAt: report.updatedAt,
-          ),
-        );
-      }
-
-      if (report.status == 'Approved') {
-        items.add(
-          _HomeNotification(
-            key:
-                'approved-${report.idTiket}-${(report.tanggalApproval ?? report.updatedAt).millisecondsSinceEpoch}',
-            title: 'Laporan anda telah disetujui',
-            subtitle: report.judulSingkat,
-            report: report,
-            createdAt: report.tanggalApproval ?? report.updatedAt,
-          ),
-        );
-      }
-
-      if (report.status == 'Rejected') {
-        items.add(
-          _HomeNotification(
-            key:
-                'rejected-${report.idTiket}-${(report.tanggalRejection ?? report.updatedAt).millisecondsSinceEpoch}',
-            title: 'Laporan anda telah ditolak',
-            subtitle: report.judulSingkat,
-            report: report,
-            createdAt: report.tanggalRejection ?? report.updatedAt,
-          ),
-        );
-      }
-
-      // Notifikasi komentar baru dari orang lain pada laporan milik user
-      for (final comment in report.comments) {
-        final isOwnComment =
-            (currentUserId != null &&
-                currentUserId.isNotEmpty &&
-                comment.idUser == currentUserId) ||
-            (currentEmail != null &&
-                currentEmail.isNotEmpty &&
-                comment.emailUser == currentEmail);
-        if (isOwnComment || comment.isDeleted) continue;
-
-        final commentKey =
-            'komentar-${report.idTiket}-${comment.id ?? comment.tanggalKomentar.millisecondsSinceEpoch}';
-        items.add(
-          _HomeNotification(
-            key: commentKey,
-            title: 'Ada komentar baru di laporanmu',
-            subtitle: report.judulSingkat,
-            report: report,
-            createdAt: comment.tanggalKomentar,
-          ),
-        );
-      }
-    }
-
-    items.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-    return items.take(15).toList();
-  }
+  // Notifications are now fetched from the database collection.
 
   Future<void> _openFilterPanel() async {
     final result = await showDialog<Map<String, String>>(
@@ -361,13 +264,9 @@ class _HomeTabState extends State<HomeTab> {
     final feedProvider = context.watch<FeedProvider>();
     final authProvider = context.watch<AuthProvider>();
     final reports = _applyFilters(feedProvider.reports);
-    final notifications = _buildNotifications(
-      feedProvider.reports,
-      currentUserId: authProvider.userId,
-      currentEmail: authProvider.email,
-    );
+    final List<NotificationModel> notifications = feedProvider.dbNotifications;
     final hasUnreadNotifications = notifications.any(
-      (n) => !_readNotificationKeys.contains(n.key),
+      (n) => !n.isRead,
     );
 
     return Stack(
@@ -432,6 +331,10 @@ class _HomeTabState extends State<HomeTab> {
                         color: const Color(0xFF335C67),
                         onRefresh: () async {
                           await context.read<FeedProvider>().fetchReports();
+                          final userId = context.read<AuthProvider>().userId;
+                          if (userId != null) {
+                            await context.read<FeedProvider>().fetchNotifications(userId);
+                          }
                         },
                         child: reports.isEmpty
                             ? ListView(
@@ -531,12 +434,10 @@ class _HomeTabState extends State<HomeTab> {
                             onTap: notifications.isEmpty
                                 ? null
                                 : () async {
-                                    setState(() {
-                                      _readNotificationKeys.addAll(
-                                        notifications.map((n) => n.key),
-                                      );
-                                    });
-                                    await _saveReadKeys();
+                                    final userId = authProvider.userId;
+                                    if (userId != null) {
+                                      await feedProvider.markAllNotificationsAsRead(userId);
+                                    }
                                   },
                             child: Text(
                               'Mark all read',
@@ -565,7 +466,7 @@ class _HomeTabState extends State<HomeTab> {
                       )
                     else
                       ConstrainedBox(
-                        constraints: const BoxConstraints(maxHeight: 175),
+                        constraints: const BoxConstraints(maxHeight: 220),
                         child: ListView.separated(
                           primary: false,
                           padding: EdgeInsets.zero,
@@ -574,24 +475,41 @@ class _HomeTabState extends State<HomeTab> {
                           separatorBuilder: (_, __) => const Divider(height: 1),
                           itemBuilder: (_, index) {
                             final item = notifications[index];
-                            final isRead = _readNotificationKeys.contains(
-                              item.key,
-                            );
+                            final isRead = item.isRead;
+                            
+                            // Tentukan judul berdasarkan deskripsi notifikasi
+                            String displayTitle = 'Notifikasi';
+                            if (item.description.contains('dukungan')) {
+                              displayTitle = 'Dukungan Laporan';
+                            } else if (item.description.contains('komentar')) {
+                              displayTitle = 'Komentar Baru';
+                            } else if (item.description.contains('disetujui') || item.description.contains('ditolak')) {
+                              displayTitle = 'Status Laporan';
+                            }
+
                             return InkWell(
-                              onTap: () {
+                              onTap: () async {
+                                if (item.id != null) {
+                                  await feedProvider.markNotificationAsRead(item.id!);
+                                }
                                 setState(() {
-                                  _readNotificationKeys.add(item.key);
                                   _showNotifications = false;
                                 });
-                                _saveReadKeys();
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => ReportDetailScreen(
-                                      report: item.report,
+                                final report = feedProvider.getReportById(item.ticketId);
+                                if (report != null) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => ReportDetailScreen(
+                                        report: report,
+                                      ),
                                     ),
-                                  ),
-                                );
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Laporan tidak ditemukan')),
+                                  );
+                                }
                               },
                               child: Padding(
                                 padding: const EdgeInsets.fromLTRB(
@@ -608,7 +526,7 @@ class _HomeTabState extends State<HomeTab> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            item.title,
+                                            displayTitle,
                                             style: const TextStyle(
                                               fontSize: 13,
                                               fontWeight: FontWeight.w600,
@@ -617,8 +535,8 @@ class _HomeTabState extends State<HomeTab> {
                                           ),
                                           const SizedBox(height: 3),
                                           Text(
-                                            item.subtitle,
-                                            maxLines: 1,
+                                            item.description,
+                                            maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
                                             style: const TextStyle(
                                               fontSize: 11,
@@ -770,18 +688,4 @@ class _HomeTabState extends State<HomeTab> {
   }
 }
 
-class _HomeNotification {
-  final String key;
-  final String title;
-  final String subtitle;
-  final TiketModel report;
-  final DateTime createdAt;
-
-  _HomeNotification({
-    required this.key,
-    required this.title,
-    required this.subtitle,
-    required this.report,
-    required this.createdAt,
-  });
-}
+// Removed _HomeNotification class as it is replaced by NotificationModel.

@@ -168,6 +168,6 @@ class NetworkConnectivityService {
     // Ensure MongoService is connected
     await MongoService().connect();
     final collection = MongoService().getCollection('tickets');
-    await collection.insert(tiketMap);
+    await collection.insertOne(tiketMap);
   }
 }
