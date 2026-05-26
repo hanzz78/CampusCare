@@ -168,6 +168,7 @@ class FeedProvider extends ChangeNotifier {
     String content,
     String userId,
     String emailUser,
+    String? profileImageUrl,
   ) async {
     try {
       await MongoService().connect();
@@ -180,6 +181,7 @@ class FeedProvider extends ChangeNotifier {
         'content': content,
         'tanggalKomentar': DateTime.now(),
         'isDeleted': false,
+        if (profileImageUrl != null) 'profileImageUrl': profileImageUrl,
       };
 
       // Push komentar ke array comments di dalam dokumen tiket

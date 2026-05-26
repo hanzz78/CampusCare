@@ -399,14 +399,14 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                                     vertical: 10,
                                   ),
                                   decoration: BoxDecoration(
-                                    color: isVoted
+                                    color: !isVoted
                                         ? const Color(0xFF9E2A2B)
-                                        : Colors.white,
+                                        : Colors.grey.shade200,
                                     borderRadius: BorderRadius.circular(12),
                                     border: Border.all(
-                                      color: isVoted
+                                      color: !isVoted
                                           ? const Color(0xFF9E2A2B)
-                                          : const Color(0xFFD0C8BE),
+                                          : Colors.grey.shade400,
                                       width: 1.5,
                                     ),
                                     boxShadow: [
@@ -421,21 +421,21 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        Icons.arrow_upward_rounded,
+                                        isVoted ? Icons.close_rounded : Icons.arrow_upward_rounded,
                                         size: 15,
-                                        color: isVoted
+                                        color: !isVoted
                                             ? Colors.white
-                                            : const Color(0xFF2A5256),
+                                            : Colors.grey.shade700,
                                       ),
                                       const SizedBox(width: 6),
                                       Text(
-                                        'Dukung',
+                                        isVoted ? 'Batal Dukung' : 'Dukung',
                                         style: TextStyle(
                                           fontSize: 13,
                                           fontWeight: FontWeight.bold,
-                                          color: isVoted
+                                          color: !isVoted
                                               ? Colors.white
-                                              : const Color(0xFF2A5256),
+                                              : Colors.grey.shade700,
                                         ),
                                       ),
                                     ],
@@ -483,6 +483,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                       updatedReport.idTiket,
                       feedProvider,
                       authProvider.userId,
+                      updatedReport.status,
                     );
                   }),
 
@@ -518,11 +519,16 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   CircleAvatar(
                     radius: 18,
                     backgroundColor: Colors.blueGrey.shade100,
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                    backgroundImage: authProvider.profileImageUrl != null && authProvider.profileImageUrl!.isNotEmpty
+                        ? NetworkImage(authProvider.profileImageUrl!)
+                        : null,
+                    child: authProvider.profileImageUrl == null || authProvider.profileImageUrl!.isEmpty
+                        ? const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 18,
+                          )
+                        : null,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -582,6 +588,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                                 content,
                                 userId,
                                 email,
+                                authProvider.profileImageUrl,
                               );
                               _commentController.clear();
                               if (context.mounted) {
@@ -640,10 +647,12 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     String idTiket,
     FeedProvider feedProvider,
     String? currentUserId,
+    String ticketStatus,
   ) {
     final time = feedProvider.getTimeAgo(comment.tanggalKomentar);
     final bool isMyComment =
         currentUserId != null && comment.idUser == currentUserId;
+    final bool canDelete = isMyComment && ticketStatus == 'Menunggu Verifikasi';
 
     // Tampilkan "Saya" untuk komentar milik current user; lainnya "Pengguna".
     final displayName = isMyComment ? 'Saya' : 'Pengguna';
@@ -661,8 +670,8 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
               ? const Color(0xFFF0F7F7)
               : const Color(0xFFF8F3EC),
           child: InkWell(
-            // Long-press untuk hapus (hanya komentar milik sendiri)
-            onLongPress: isMyComment && comment.id != null
+            // Long-press untuk hapus (hanya komentar milik sendiri dan jika tiket belum ditanggapi)
+            onLongPress: canDelete && comment.id != null
                 ? () => _showDeleteDialog(
                     comment,
                     idTiket,
@@ -698,14 +707,19 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                         backgroundColor: const Color(
                           0xFF335C67,
                         ).withOpacity(0.12),
-                        child: Text(
-                          avatarInitial,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                            color: Color(0xFF335C67),
-                          ),
-                        ),
+                        backgroundImage: comment.profileImageUrl != null && comment.profileImageUrl!.isNotEmpty
+                            ? NetworkImage(comment.profileImageUrl!)
+                            : null,
+                        child: comment.profileImageUrl == null || comment.profileImageUrl!.isEmpty
+                            ? Text(
+                                avatarInitial,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 13,
+                                  color: Color(0xFF335C67),
+                                ),
+                              )
+                            : null,
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -736,8 +750,8 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                       height: 1.45,
                     ),
                   ),
-                  // Hint hapus — hanya untuk komentar sendiri
-                  if (isMyComment) ...[
+                  // Hint hapus — hanya untuk komentar yang bisa dihapus
+                  if (canDelete) ...[
                     const SizedBox(height: 6),
                     Row(
                       children: [

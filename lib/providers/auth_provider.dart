@@ -16,6 +16,7 @@ class AuthProvider extends ChangeNotifier {
 
   bool _isLoading = false;
   bool _isLoggedIn = false;
+  bool _isSessionChecked = false;
   String _role = 'user'; // Default role
   String? _userId;
   String? _profileImageUrl;
@@ -27,6 +28,7 @@ class AuthProvider extends ChangeNotifier {
   // Getters supaya bisa dibaca oleh UI
   bool get isLoading => _isLoading;
   bool get isLoggedIn => _isLoggedIn;
+  bool get isSessionChecked => _isSessionChecked;
   String get role => _role;
   String? get userId => _userId;
   String? get profileImageUrl => _profileImageUrl;
@@ -57,6 +59,7 @@ class AuthProvider extends ChangeNotifier {
       _userId = null;
       _profileImageUrl = null;
     }
+    _isSessionChecked = true;
     notifyListeners();
   }
 
@@ -256,7 +259,7 @@ class AuthProvider extends ChangeNotifier {
   }
 
   // Fungsi Baru: Update Data Profil
-  Future<void> updateProfileData(String name, String location, String phone) async {
+  Future<void> updateProfileData(String name) async {
     if (_userId == null) throw Exception("User ID tidak ditemukan");
     
     _isLoading = true;
@@ -265,8 +268,6 @@ class AuthProvider extends ChangeNotifier {
     try {
       final updateData = {
         'nama': name,
-        'lokasiGedung': location,
-        'telepon': phone,
         'updatedAt': DateTime.now(),
       };
 
@@ -284,8 +285,6 @@ class AuthProvider extends ChangeNotifier {
       _cachedName = name;
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('cachedName', name);
-      await prefs.setString('lokasiGedung', location);
-      await prefs.setString('telepon', phone);
 
     } catch (e) {
       debugPrint("Error updating profile data: $e");
