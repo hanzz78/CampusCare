@@ -4,6 +4,7 @@ import 'package:mongo_dart/mongo_dart.dart' show ObjectId;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import '../services/hive_service.dart';
+import '../services/notification_service.dart';
 import '../services/mongo_service.dart';
 import '../models/tiket_model.dart';
 
@@ -194,5 +195,12 @@ class ReportFormProvider extends ChangeNotifier {
     final collection = MongoService().getCollection('tickets');
     await collection.insertOne(tiketMap);
     debugPrint("🚀 Tiket berhasil dikirim ke MongoDB: $idTiket");
+
+    await NotificationService.notifyTicketCreatedToPenanggungJawab(
+      ticketId: idTiket,
+      ticketTitle: _judul,
+      gedung: lokasiModel.gedung,
+      createdAt: now,
+    );
   }
 }

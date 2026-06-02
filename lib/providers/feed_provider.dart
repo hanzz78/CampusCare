@@ -341,23 +341,34 @@ class FeedProvider extends ChangeNotifier {
     try {
       await MongoService().connect();
       final notificationsCol = MongoService().getCollection('notifications');
-      
-      final data = await notificationsCol.find(
-        where.eq('user_id', ObjectId.fromHexString(userId))
-            .sortBy('created_at', descending: true)
-      ).toList();
+      final userObjectId = ObjectId.fromHexString(userId);
 
-      _dbNotifications = data.map((json) => NotificationModel.fromJson(json)).toList();
+      final data = await notificationsCol.find({
+        'user_id': userObjectId,
+      }).toList();
+
+      data.sort((a, b) {
+        final aDate = _parseDate(a['created_at']);
+        final bDate = _parseDate(b['created_at']);
+        return bDate.compareTo(aDate);
+      });
+
+      _dbNotifications = data.map((json) {
+        final patched = Map<String, dynamic>.from(json);
+        patched['is_read'] = _isReadForUser(patched, userObjectId);
+        return NotificationModel.fromJson(patched);
+      }).toList();
       notifyListeners();
     } catch (e) {
       debugPrint("❌ Error fetchNotifications: $e");
     }
   }
 
-  Future<void> markNotificationAsRead(String notificationId) async {
+  Future<void> markNotificationAsRead(String notificationId, String userId) async {
     try {
       await MongoService().connect();
       final notificationsCol = MongoService().getCollection('notifications');
+
       await notificationsCol.updateOne(
         where.id(ObjectId.fromHexString(notificationId)),
         modify.set('is_read', true),
@@ -387,8 +398,10 @@ class FeedProvider extends ChangeNotifier {
     try {
       await MongoService().connect();
       final notificationsCol = MongoService().getCollection('notifications');
+      final userObjectId = ObjectId.fromHexString(userId);
+
       await notificationsCol.updateMany(
-        where.eq('user_id', ObjectId.fromHexString(userId)),
+        where.eq('user_id', userObjectId),
         modify.set('is_read', true),
       );
       
@@ -441,5 +454,16 @@ class FeedProvider extends ChangeNotifier {
     } catch (_) {
       return null;
     }
+  }
+
+  bool _isReadForUser(Map<String, dynamic> notification, ObjectId userObjectId) {
+    return notification['is_read'] as bool? ?? false;
+  }
+
+  DateTime _parseDate(dynamic date) {
+    if (date == null) return DateTime.now();
+    if (date is DateTime) return date;
+    if (date is String) return DateTime.tryParse(date) ?? DateTime.now();
+    return DateTime.now();
   }
 }
