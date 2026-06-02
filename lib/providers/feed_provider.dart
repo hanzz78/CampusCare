@@ -24,8 +24,30 @@ class FeedProvider extends ChangeNotifier {
   final Set<String> _votedTicketIds = {};
   bool hasUserVoted(String idTiket) => _votedTicketIds.contains(idTiket);
 
-  FeedProvider() {
-    fetchReports();
+  FeedProvider({bool autoFetch = true}) {
+    if (autoFetch) {
+      fetchReports();
+    }
+  }
+
+  @visibleForTesting
+  void setReportsForTesting(List<TiketModel> reports) {
+    _reports = reports;
+    notifyListeners();
+  }
+
+  @visibleForTesting
+  void setNotificationsForTesting(List<NotificationModel> notifications) {
+    _dbNotifications = notifications;
+    notifyListeners();
+  }
+
+  @visibleForTesting
+  void setVotedTicketIdsForTesting(Set<String> ticketIds) {
+    _votedTicketIds
+      ..clear()
+      ..addAll(ticketIds);
+    notifyListeners();
   }
 
   Future<void> fetchReports() async {

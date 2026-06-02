@@ -25,8 +25,16 @@ class AdminDashboardProvider extends ChangeNotifier {
   String get adminActionTab => _adminActionTab;
   String get adminStatusFilter => _adminStatusFilter;
 
-  AdminDashboardProvider() {
-    fetchDashboardStats();
+  AdminDashboardProvider({bool autoFetch = true}) {
+    if (autoFetch) {
+      fetchDashboardStats();
+    }
+  }
+
+  @visibleForTesting
+  void setReportsForTesting(List<TiketModel> reports) {
+    _reports = reports;
+    notifyListeners();
   }
 
   void setCategoryFilter(String category) {
