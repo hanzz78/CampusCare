@@ -66,10 +66,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Future<void> _openNotificationDetail(
     BuildContext context,
     FeedProvider feedProvider,
+    String userId,
     NotificationModel item,
   ) async {
-    if (item.id != null && !item.isRead) {
-      await feedProvider.markNotificationAsRead(item.id!);
+    if (item.id != null && !item.isRead && userId.isNotEmpty) {
+      await feedProvider.markNotificationAsRead(item.id!, userId);
     }
 
     final report = feedProvider.getReportById(item.ticketId);
@@ -188,6 +189,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                       onTap: () => _openNotificationDetail(
                         context,
                         feedProvider,
+                        authProvider.userId ?? '',
                         item,
                       ),
                       child: SizedBox(

@@ -10,6 +10,7 @@ import '../providers/auth_provider.dart';
 import '../screens/dashboard_screen.dart';
 import '../main.dart';
 import 'hive_service.dart';
+import 'notification_service.dart';
 import 'mongo_service.dart';
 
 class NetworkConnectivityService {
@@ -179,5 +180,16 @@ class NetworkConnectivityService {
     await MongoService().connect();
     final collection = MongoService().getCollection('tickets');
     await collection.insertOne(tiketMap);
+
+    final gedung = (data['lokasi'] is Map<String, dynamic>)
+        ? (data['lokasi']['gedung']?.toString() ?? 'Tidak Diketahui')
+        : 'Tidak Diketahui';
+
+    await NotificationService.notifyTicketCreatedToPenanggungJawab(
+      ticketId: idTiket,
+      ticketTitle: data['judulSingkat']?.toString() ?? '',
+      gedung: gedung,
+      createdAt: now,
+    );
   }
 }

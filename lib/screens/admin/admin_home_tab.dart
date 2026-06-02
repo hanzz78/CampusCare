@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../providers/admin_dashboard_provider.dart';
+import '../../providers/auth_provider.dart';
+import '../../providers/feed_provider.dart';
 import '../../models/tiket_model.dart';
-import '../../services/mongo_service.dart';
+import '../notifications_screen.dart';
 import 'admin_report_review_screen.dart';
 
 class AdminHomeTab extends StatefulWidget {
@@ -30,6 +32,12 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
   void initState() {
     super.initState();
     _loadReadKeys();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = context.read<AuthProvider>().userId;
+      if (userId != null && userId.isNotEmpty) {
+        context.read<FeedProvider>().fetchNotifications(userId);
+      }
+    });
   }
 
   Future<void> _loadReadKeys() async {
@@ -89,8 +97,9 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<AdminDashboardProvider>();
+    final feedProvider = context.watch<FeedProvider>();
     final notifs = _buildNotifications(provider.reports);
-    final hasUnread = notifs.any((n) => !_readKeys.contains(n.key));
+    final hasUnread = feedProvider.dbNotifications.any((n) => !n.isRead);
 
     return Stack(
       children: [
@@ -349,10 +358,18 @@ class _AdminHomeTabState extends State<AdminHomeTab> {
                   clipBehavior: Clip.none,
                   children: [
                     IconButton(
-                      onPressed: () {
-                        setState(() {
-                          _showNotifications = !_showNotifications;
-                        });
+                      onPressed: () async {
+                        final userId = context.read<AuthProvider>().userId;
+                        if (userId != null && userId.isNotEmpty) {
+                          await context.read<FeedProvider>().fetchNotifications(userId);
+                        }
+                        if (!context.mounted) return;
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const NotificationsScreen(),
+                          ),
+                        );
                       },
                       icon: const Icon(Icons.notifications_none_rounded, color: Colors.white),
                     ),

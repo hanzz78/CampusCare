@@ -890,50 +890,74 @@ db.createCollection("notifications", {
   validator: {
     $jsonSchema: {
       bsonType: "object",
-      required: ["idUser", "type", "relatedTiket", "title", "message", "createdAt"],
+      required: [
+        "user_id",
+        "ticket_id",
+        "ticket_title",
+        "description",
+        "is_read",
+        "created_at"
+      ],
       properties: {
         _id: { bsonType: "objectId" },
-        idUser: {
+
+        // Untuk kompatibilitas schema lama dan notifikasi user tunggal
+        user_id: {
           bsonType: "objectId",
-          description: "Reference to users._id (recipient)"
+          description: "Recipient utama (single recipient)"
+        },
+
+        // Opsional: untuk notifikasi multi-recipient (contoh: semua Penanggung Jawab)
+        recipient_user_ids: {
+          bsonType: "array",
+          description: "Daftar recipient user_id untuk single-document fan-out",
+          items: { bsonType: "objectId" }
+        },
+
+        // Opsional: daftar user yang sudah membaca notifikasi
+        read_by_user_ids: {
+          bsonType: "array",
+          description: "Daftar user_id yang sudah membaca notifikasi",
+          items: { bsonType: "objectId" }
+        },
+
+        ticket_id: {
+          bsonType: "string",
+          description: "ID tiket terkait"
+        },
+        ticket_title: {
+          bsonType: "string",
+          description: "Judul tiket"
+        },
+        description: {
+          bsonType: "string",
+          description: "Isi notifikasi"
+        },
+        is_read: {
+          bsonType: "bool",
+          description: "Status baca global (dipakai untuk skenario shared-read)"
+        },
+        created_at: {
+          bsonType: "date",
+          description: "Waktu notifikasi dibuat"
+        },
+
+        // Metadata opsional untuk filtering dan analitik
+        recipient_role: {
+          bsonType: "string",
+          enum: ["User", "Penanggung Jawab", "Admin"],
+          description: "Role target notifikasi"
         },
         type: {
           bsonType: "string",
-          enum: ["TIKET_SUBMIT", "TIKET_APPROVED", "TIKET_REJECTED", "TIKET_NEW_COMMENT", 
-                 "TIKET_BARU_MASUK"],
+          enum: [
+            "TICKET_CREATED",
+            "STATUS_APPROVED",
+            "STATUS_REJECTED",
+            "COMMENT",
+            "UPVOTE"
+          ],
           description: "Type of notification"
-        },
-        relatedTiket: {
-          bsonType: "string",
-          pattern: "^TKT-[0-9]{4}-[0-9]{3,}$",
-          description: "Related ticket ID"
-        },
-        title: {
-          bsonType: "string",
-          maxLength: 200,
-          description: "Notification title"
-        },
-        message: {
-          bsonType: "string",
-          maxLength: 1000,
-          description: "Notification message body"
-        },
-        channel: {
-          bsonType: "array",
-          description: "Channels notified (in-app, push, email)",
-          items: { bsonType: "string", enum: ["in-app", "push", "email"] }
-        },
-        isRead: {
-          bsonType: "bool",
-          description: "Whether user has read this notification"
-        },
-        createdAt: {
-          bsonType: "date",
-          description: "Notification creation time"
-        },
-        readAt: {
-          bsonType: ["date", "null"],
-          description: "When user read notification"
         }
       }
     }
@@ -945,37 +969,44 @@ db.createCollection("notifications", {
 ```json
 [
   {
-    "_id": ObjectId("6672f1g4f3c3c3c3c3c3c3c1"),
-    "idUser": ObjectId("6672a1b4f3c3c3c3c3c3c3c1"),
-    "type": "TIKET_SUBMIT",
-    "relatedTiket": "TKT-2026-001",
-    "title": "Laporan Anda telah dikirim",
-    "message": "Laporan Anda tentang AC Rusak di Ruang Lab telah dikirim dan menunggu verifikasi. ID: TKT-2026-001",
-    "channel": ["in-app", "push"],
-    "isRead": true,
-    "createdAt": "2026-04-28T10:32:00Z",
-    "readAt": "2026-04-28T10:35:00Z"
+    "_id": ObjectId("6672f1f4f3c3c3c3c3c3c3c1"),
+    "user_id": ObjectId("6672a1b4f3c3c3c3c3c3c3c1"),
+    "ticket_id": "TKT-2026-001",
+    "ticket_title": "AC Rusak di Ruang Lab",
+    "description": "Laporan Anda mendapatkan komentar baru pada ticket: AC Rusak di Ruang Lab.",
+    "is_read": false,
+    "created_at": "2026-04-28T10:32:00Z",
+    "recipient_role": "User",
+    "type": "COMMENT"
   },
   {
-    "_id": ObjectId("6672f1g4f3c3c3c3c3c3c3c2"),
-    "idUser": ObjectId("6672a1b4f3c3c3c3c3c3c3c1"),
-    "type": "TIKET_APPROVED",
-    "relatedTiket": "TKT-2026-002",
-    "title": "Laporan Anda telah diterima",
-    "message": "Laporan Anda tentang Kran Air di Toilet telah diterima (APPROVED) dengan prioritas Tinggi. Akan segera ditangani.",
-    "channel": ["in-app", "push", "email"],
-    "isRead": false,
-    "createdAt": "2026-04-27T14:05:00Z",
-    "readAt": null
+    "_id": ObjectId("6672f1f4f3c3c3c3c3c3c3c2"),
+    "user_id": ObjectId("6672a1b4f3c3c3c3c3c3c3d9"),
+    "recipient_user_ids": [
+      ObjectId("6672a1b4f3c3c3c3c3c3c3d9"),
+      ObjectId("6672a1b4f3c3c3c3c3c3c3da")
+    ],
+    "read_by_user_ids": [
+      ObjectId("6672a1b4f3c3c3c3c3c3c3d9")
+    ],
+    "ticket_id": "TKT-2026-002",
+    "ticket_title": "AC Mati",
+    "description": "Laporan baru masuk: AC Mati di Gedung A",
+    "is_read": true,
+    "created_at": "2026-04-27T14:05:00Z",
+    "recipient_role": "Penanggung Jawab",
+    "type": "TICKET_CREATED"
   }
 ]
 ```
 
 **Index:**
 ```javascript
-db.notifications.createIndex({ "idUser": 1, "createdAt": -1 });
-db.notifications.createIndex({ "isRead": 1 });
-db.notifications.createIndex({ "createdAt": -1 });
+db.notifications.createIndex({ "user_id": 1, "created_at": -1 });
+db.notifications.createIndex({ "recipient_user_ids": 1, "created_at": -1 });
+db.notifications.createIndex({ "read_by_user_ids": 1 });
+db.notifications.createIndex({ "recipient_role": 1, "type": 1, "created_at": -1 });
+db.notifications.createIndex({ "ticket_id": 1, "created_at": -1 });
 ```
 
 ---
